@@ -1,0 +1,37 @@
+# Настройки статического анализа для assist-eye.
+# Базовый набор правил — flutter_lints (recommended), с дополнительными
+# ужесточениями под требования проекта (доступность, чистый код).
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    missing_return: error
+    missing_required_param: error
+    dead_code: warning
+  exclude:
+    - '**/*.g.dart'
+    - '**/*.freezed.dart'
+
+linter:
+  rules:
+    # --- Стиль ---
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_final_locals: true
+    prefer_single_quotes: true
+    sort_child_properties_last: true
+    use_key_in_widget_constructors: true
+
+    # --- Безопасность и надёжность ---
+    avoid_print: true                   # Используем Logger, не print()
+    avoid_dynamic_calls: true
+    cancel_subscriptions: true
+    close_sinks: true
+
+    # --- Документация публичных API ---
+    public_member_api_docs: true
+
+    # --- Доступность (напоминание) ---
+    # Нет встроенного lint-правила для Semantics, но widget-тесты
+    # с тегом 'accessibility' проверяют наличие Semantics-меток.

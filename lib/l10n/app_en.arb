@@ -1,0 +1,67 @@
+{
+  "@@locale": "en",
+  "appTitle": "AssistEye",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "commandRead": "Read",
+  "@commandRead": {
+    "description": "Voice command: read text (OCR)"
+  },
+  "commandDescribe": "Describe",
+  "@commandDescribe": {
+    "description": "Voice command: describe objects"
+  },
+  "commandBanknote": "Banknote",
+  "@commandBanknote": {
+    "description": "Voice command: identify banknote"
+  },
+  "commandHelp": "Help",
+  "@commandHelp": {
+    "description": "Voice command: list available commands"
+  },
+  "commandRepeat": "Repeat",
+  "@commandRepeat": {
+    "description": "Voice command: repeat last result"
+  },
+  "commandStop": "Stop",
+  "@commandStop": {
+    "description": "Voice command: stop TTS"
+  },
+  "statusReady": "Ready. Press the button and say a command.",
+  "statusListening": "Listening...",
+  "statusProcessing": "Processing...",
+  "errorNotRecognized": "Didn't understand — say it again.",
+  "errorNoText": "No text detected — try bringing the camera closer and ensure good lighting.",
+  "errorNoObjects": "Could not recognize objects — try pointing the camera differently.",
+  "errorCameraBusy": "Camera is currently in use — close the other app.",
+  "errorModelNotLoaded": "Language pack needs to be downloaded. Connect to the internet and try again.",
+  "errorAsrTimeout": "Didn't hear a command — press the button and say it again.",
+  "errorFeatureDisabled": "This feature is not yet available.",
+  "banknoteLowConfidence": "Not sure — bring the banknote closer and straighten it.",
+  "banknoteResult": "Banknote: {denomination}",
+  "@banknoteResult": {
+    "placeholders": {
+      "denomination": {
+        "type": "String"
+      }
+    }
+  },
+  "detectionResult": "I see: {objects}",
+  "@detectionResult": {
+    "placeholders": {
+      "objects": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsTitle": "Settings",
+  "settingsLanguage": "Language",
+  "settingsTtsVoice": "Voice",
+  "settingsTtsRate": "Speech rate",
+  "historyTitle": "History",
+  "historyClear": "Clear history",
+  "historyClearConfirm": "Delete all history entries?",
+  "historyEmpty": "No entries yet.",
+  "helpMessage": "Available commands: Read — to read text. Describe or What is this — to recognize objects. Banknote — to identify a banknote. Repeat — to hear the last result again. Stop — to stop speaking. Help — to hear this list."
+}

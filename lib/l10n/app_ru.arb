@@ -1,0 +1,46 @@
+{
+  "@@locale": "ru",
+  "appTitle": "AssistEye",
+  "commandRead": "Прочитай",
+  "commandDescribe": "Опиши",
+  "commandBanknote": "Купюра",
+  "commandHelp": "Помощь",
+  "commandRepeat": "Повтори",
+  "commandStop": "Стоп",
+  "statusReady": "Готово. Нажмите кнопку и скажите команду.",
+  "statusListening": "Слушаю...",
+  "statusProcessing": "Обрабатываю...",
+  "errorNotRecognized": "Не понял — скажите ещё раз.",
+  "errorNoText": "Текст не обнаружен — поднесите камеру ближе и убедитесь, что есть хорошее освещение.",
+  "errorNoObjects": "Не удалось распознать объекты — попробуйте направить камеру иначе.",
+  "errorCameraBusy": "Камера сейчас используется — закройте другое приложение.",
+  "errorModelNotLoaded": "Для работы нужно скачать языковой пакет. Подключитесь к интернету и попробуйте снова.",
+  "errorAsrTimeout": "Не услышал команду — нажмите кнопку и скажите ещё раз.",
+  "errorFeatureDisabled": "Функция пока недоступна.",
+  "banknoteLowConfidence": "Не уверен — поднесите купюру ближе и расправьте.",
+  "banknoteResult": "Купюра: {denomination}",
+  "@banknoteResult": {
+    "placeholders": {
+      "denomination": {
+        "type": "String"
+      }
+    }
+  },
+  "detectionResult": "Вижу: {objects}",
+  "@detectionResult": {
+    "placeholders": {
+      "objects": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsTitle": "Настройки",
+  "settingsLanguage": "Язык",
+  "settingsTtsVoice": "Голос",
+  "settingsTtsRate": "Скорость речи",
+  "historyTitle": "История",
+  "historyClear": "Очистить историю",
+  "historyClearConfirm": "Удалить все записи истории?",
+  "historyEmpty": "Записей пока нет.",
+  "helpMessage": "Доступные команды: Прочитай — для чтения текста. Опиши или Что это — для распознавания объектов. Купюра — для определения банкноты. Повтори — для повтора последнего результата. Стоп — для остановки озвучивания. Помощь — для прослушивания этого списка."
+}

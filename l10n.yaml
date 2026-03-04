@@ -1,0 +1,12 @@
+# Конфигурация Flutter l10n.
+# ARB-файлы лежат в lib/l10n/, генерация запускается автоматически
+# при flutter generate (или через build_runner).
+
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+preferred-supported-locales:
+  - ru
+  - en
+nullable-getter: false
