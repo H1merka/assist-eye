@@ -5,7 +5,7 @@
 **Версия документа:** 1.1  
 **Дата составления:** 2026-03-04
 
-> **Контекст:** кроссплатформенное мобильное приложение (Android + iOS), основной способ взаимодействия — голос (ASR и TTS), без внешнего оборудования. Языки: русский и английский. Команда: 6 человек. Бюджет: ~5 000 ₽. Срок MVP: 4 месяца.
+> **Контекст:** кроссплатформенное мобильное приложение (Android + iOS) на React Native + TypeScript, основной способ взаимодействия — голос (ASR и TTS), без внешнего оборудования. Языки: русский и английский. Команда: 6 человек. Бюджет: ~5 000 ₽. Срок MVP: 4 месяца.
 
 ---
 
@@ -108,7 +108,7 @@
 #### 4.4. Интерфейс доступности
 
 - Полная совместимость с **TalkBack** (Android) и **VoiceOver** (iOS)
-- `Semantics`-метки на каждом виджете; touch-target ≥ 48×48 dp
+- Accessibility-атрибуты (`accessibilityRole`, `accessibilityLabel`) на каждом компоненте; touch-target ≥ 48×48 dp
 - Поддержка масштабирования шрифтов и высокой контрастности
 
 #### 4.5. Настройки и история
@@ -163,7 +163,7 @@
 #### Сценарий «Прочитай»
 
 1. Захват кадра (autofocus, max 1280×960)
-2. Preprocessing: автобаланс яркости/контраста через `image`-пакет
+2. Preprocessing: автобаланс яркости/контраста через утилиты предобработки
 3. ML Kit Text Recognition → извлечение блоков текста
 4. Если текст пустой / confidence < 0.4 → _«Текст не обнаружен — поднесите камеру ближе»_
 5. Иначе: TTS зачитывает блоки слева→направо, сверху→вниз
@@ -172,11 +172,11 @@
 #### Сценарий «Опиши» / «Что это»
 
 1. Захват кадра → resize до 300×300 (SSD MobileNet input)
-2. TFLite inference в background Isolate
+2. TFLite inference через JSI (react-native-fast-tflite)
 3. NMS (IoU = 0.45), confidence ≥ 0.45
 4. Результат: _«Вижу: бутылка, книга»_ (топ-3). Если 0 детекций — _«Не удалось распознать объекты»_
 
-#### Сценарий «Купюра» *(Should-have)*
+#### Сценарий «Купюра» *(Should-have, feature flag)*
 
 1. Захват кадра → crop центральной области 60% → resize 224×224
 2. MobileNet v3-Small → softmax → top-1
@@ -195,7 +195,7 @@
 
 - Все результаты дублируются **вибрацией** (короткая — успех, двойная — ошибка)
 - При длительной операции (> 1.5 с) — промежуточное сообщение _«Обрабатываю…»_
-- Многоязычность: язык ASR/TTS через настройки; UI-строки через Flutter `l10n` (arb, RU/EN)
+- Многоязычность: язык ASR/TTS через настройки; UI-строки через `i18next` + `react-i18next` (JSON locale-файлы, RU/EN)
 - Отклонение разрешений камеры/микрофона → объяснение + предложение открыть системные настройки
 
 ### 5.3. Ограничения и допущения
@@ -214,7 +214,7 @@
 | **Производительность** | OCR ≤ 3–5 с на страницу; детекция ≤ 2–4 с |
 | **Надёжность** | Корректная обработка ошибок ASR/CV с понятными подсказками |
 | **Безопасность** | Изображения не сохраняются по умолчанию; шифрование при сохранении; локальная обработка |
-| **Доступность** | Описательные Accessibility labels на всех элементах; крупные шрифты; масштабирование |
+| **Доступность** | `accessibilityRole` / `accessibilityLabel` на всех компонентах; крупные шрифты; масштабирование |
 | **Тестируемость** | Unit-тесты, интеграционные тесты, acceptance-тесты с реальными пользователями |
 
 ---
@@ -235,46 +235,49 @@
 
 ### 7.1. Языки и фреймворк
 
-**Flutter (Dart) ≥ 3.x** — единая кодовая база iOS + Android, зрелая accessibility-экосистема (`Semantics`), Platform Channels / FFI.
+**React Native 0.76+ (TypeScript 5.6+)** — единая кодовая база iOS + Android, зрелая accessibility-экосистема, JSI-биндинги для высокопроизводительных ML-модулей.
 
 Основные пакеты:
 
 | Пакет | Назначение |
-|-------|-----------|
-| `flutter_bloc` / `riverpod` | Управление состоянием |
-| `camera` | Захват кадров |
-| `path_provider`, `sqflite` | Локальное хранилище |
-| `flutter_tts` | Обёртка системного TTS |
-| `permission_handler` | Запросы разрешений |
+|-------|----------|
+| `zustand` | Управление состоянием |
+| `react-native-vision-camera` v4.6+ | Захват кадров (singleton, Frame Processors) |
+| `react-native-sqlite-storage` | Локальное хранилище (SQLite) |
+| `react-native-keychain` | Шифрованное хранилище (AES-256) |
+| `react-native-tts` | Обёртка системного TTS |
+| `react-native-permissions` | Запросы разрешений |
+| `@react-navigation/native-stack` v7 | Навигация |
+| `i18next` + `react-i18next` + `react-native-localize` | Локализация (RU/EN) |
 
 ### 7.2. Speech (ASR)
 
-**Vosk** (on-device, Apache-2.0) через `vosk_flutter`:
+**Vosk** (on-device, Apache-2.0) через `react-native-vosk`:
 
 - Модели: `vosk-model-small-ru` (~45 МБ), `vosk-model-small-en-us` (~40 МБ)
 - Скачиваются при первом запуске, кешируются в Application Support
 - Fallback: если модель не загружена → инструкция + предложение скачать
 
-> *Альтернатива (оценена, отложена):* PocketSphinx — хуже качество RU, нет Flutter-плагина.
+> *Альтернатива (оценена, отложена):* PocketSphinx — хуже качество RU, нет React Native-плагина.
 
 ### 7.3. TTS
 
-- **Основной:** системный TTS через `flutter_tts` (Android `TextToSpeech`, iOS `AVSpeechSynthesizer`)
+- **Основной:** системный TTS через `react-native-tts` (Android `TextToSpeech`, iOS `AVSpeechSynthesizer`)
 - **Опционально (post-MVP):** RHVoice (LGPL-3.0) — расширенный русский голос (~1 неделя)
 - Настройки: скорость 0.5×–2.0×, громкость, выбор голоса
 
 ### 7.4. OCR
 
-**Google ML Kit On-device Text Recognition v2** (`google_mlkit_text_recognition`):
+**Google ML Kit On-device Text Recognition v2** (`@react-native-ml-kit/text-recognition`):
 
 - Кириллица + латиница офлайн; модель ~15 МБ
-- Preprocessing: автокоррекция яркости/контраста через `image`-пакет
+- Preprocessing: автокоррекция яркости/контраста через утилиты `imagePreprocessing.ts`
 
-**Fallback:** Tesseract (`flutter_tesseract_ocr`) для Huawei без GMS (~12 МБ/язык, ручная загрузка traineddata).
+**Fallback:** Tesseract (react-native Tesseract-обёртка) для Huawei без GMS (~12 МБ/язык, ручная загрузка traineddata).
 
 ### 7.5. Computer Vision (детекция объектов)
 
-**TensorFlow Lite** через `tflite_flutter` + `tflite_flutter_helper`:
+**TensorFlow Lite** через `react-native-fast-tflite` (JSI-based):
 
 | Модель | Описание |
 |--------|---------|
@@ -289,9 +292,10 @@
 
 | Библиотека | Назначение |
 |-----------|-----------|
-| `image` (Dart) | Ресайз/кроп/яркость перед inference |
-| `sqflite` | Настройки, история распознаваний |
-| `flutter_secure_storage` | AES-256, Keystore/Keychain |
+| `react-native-image-manipulator` / утилиты | Ресайз/кроп/яркость перед inference |
+| `react-native-sqlite-storage` | Настройки, история распознаваний |
+| `react-native-keychain` | AES-256, Android Keystore / iOS Keychain |
+| `react-native-haptic-feedback` | Тактильная обратная связь |
 | MediaPipe *(post-MVP)* | Определение ориентации телефона |
 
 ### 7.7. Управление размером приложения
@@ -312,10 +316,10 @@
 
 | Триггер | Пайплайн |
 |---------|---------|
-| Каждый PR | `flutter analyze` → `flutter test` → debug APK |
-| Тег `v*` | Release APK + IPA (через Codemagic) → GitHub Releases |
+| Каждый PR | `tsc --noEmit` → `eslint` → `prettier` → `jest` → debug APK (`gradlew assembleDebug`) |
+| Тег `v*` | `tsc` → `jest` → release APK (`gradlew assembleRelease`) → GitHub Releases |
 
-Линтинг: `flutter_lints` + `dart format --set-exit-if-changed`.
+Линтинг: ESLint (`@react-native` config + strict TS) + Prettier (single quotes, trailing comma, 100 chars).
 
 ### 7.10. Тестирование доступности
 
@@ -323,7 +327,7 @@
 |-----------|-----------|
 | TalkBack / VoiceOver | Ручное тестирование на каждом спринте |
 | Accessibility Scanner (Android) | Автоматическая проверка контраста, touch-target |
-| `flutter test --tags=accessibility` | Виджет-тесты с семантическими проверками |
+| `npm run test:accessibility` | Компонентные тесты с accessibility-проверками (Jest + @testing-library/react-native) |
 
 ---
 
@@ -333,19 +337,20 @@
 
 ```
   ┌─────────────────────────────────────────────────────────┐
-  │                     UI Layer (Flutter)                  │
-  │  Semantics widgets · TalkBack/VoiceOver · Gesture       │
+  │               UI Layer (React Native + TS)              │
+  │  accessibilityRole/Label · TalkBack/VoiceOver · Gesture │
   └──────────┬──────────────────────────────┬───────────────┘
              │ команды (tap/shake)          │ результат (TTS)
              ▼                              ▲
   ┌──────────────────────┐       ┌──────────────────────┐
   │   Voice Interface    │       │     TTS Module       │
-  │  (Vosk ASR, Isolate) │       │  (flutter_tts)       │
+  │  (Vosk ASR,          │       │  (react-native-tts)  │
+  │   react-native-vosk) │       │                      │
   └──────────┬───────────┘       └──────────▲───────────┘
              │ текст команды                │ текст ответа
              ▼                              │
   ┌──────────────────────────────────────────┴──────────────┐
-  │                Command Processor (BLoC/Riverpod)        │
+  │              Command Processor (Zustand store)          │
   │  parse command → dispatch → collect result → format     │
   │  Error Boundary: каждый модуль обёрнут в try/catch      │
   └────┬────────────┬────────────┬──────────────────────────┘
@@ -354,20 +359,22 @@
   ┌──────────┐ ┌──────────┐ ┌──────────────────────────────┐
   │ OCR      │ │ Object   │ │ Banknote Classifier          │
   │ Module   │ │ Detector │ │ (feature flag)               │
-  │ (ML Kit) │ │ (TFLite) │ │ (TFLite MobileNet v3-Small)  │
+  │ (ML Kit) │ │ (TFLite  │ │ (TFLite MobileNet v3-Small)  │
+  │          │ │  JSI)    │ │                              │
   └──────────┘ └──────────┘ └──────────────────────────────┘
        │            │            │
        └────────────┴────────────┘
                     │
        ┌────────────▼────────────┐
        │   Camera Service        │
-       │  (singleton,            │
+       │  (react-native-vision-  │
+       │   camera, singleton,    │
        │   auto-release 30s)     │
        └────────────┬────────────┘
                     │
        ┌────────────▼────────────┐       ┌─────────────────────┐
        │   Storage Module        │       │  Local Logger        │
-       │  SQLite + secure_storage│       │  (JSON, no PII,     │
+       │  SQLite + keychain      │       │  (JSON, no PII,     │
        └─────────────────────────┘       │   rotate 5 MB)      │
                                          └─────────────────────┘
 ```
@@ -376,15 +383,15 @@
 
 | Компонент | Описание |
 |-----------|---------|
-| **UI Layer** | Минимум экранов: главный (кнопка + статус), настройки, история. Все виджеты с `Semantics`. |
-| **Voice Interface** | Vosk ASR в отдельном Dart Isolate. Общение через `SendPort`/`ReceivePort`. |
-| **Command Processor** | Центральный оркестратор (BLoC). Парсинг по ключевым словам (regexp) → dispatch → TTS. Error Boundary при исключениях. |
-| **OCR Module** | ML Kit Text Recognition v2 через Platform Channel. Preprocessing в `compute()`. |
-| **Object Detector** | TFLite inference в отдельном Isolate. NMS + фильтрация на Dart. |
+| **UI Layer** | Минимум экранов: главный (кнопка + статус), настройки, история. Все компоненты с `accessibilityRole` / `accessibilityLabel`. |
+| **Voice Interface** | Vosk ASR через `react-native-vosk`. Нативный модуль с JS-биндингами. |
+| **Command Processor** | Центральный оркестратор (Zustand store). Парсинг по ключевым словам (regexp) → dispatch → TTS. Error Boundary при исключениях. |
+| **OCR Module** | ML Kit Text Recognition v2 через `@react-native-ml-kit/text-recognition`. Preprocessing через утилиты. |
+| **Object Detector** | TFLite inference через `react-native-fast-tflite` (JSI). NMS + фильтрация в TypeScript. |
 | **Banknote Classifier** | Аналогично Object Detector, другая модель и crop-стратегия. Защищён feature flag. |
-| **Camera Service** | Singleton: `initialize` → `capture` → `release`. Авто-отключение через 30 с. |
-| **TTS Module** | Обёртка `flutter_tts`; FIFO-очередь; «Стоп» очищает очередь. |
-| **Storage Module** | SQLite: `settings` (key-value), `history` (id, type, text, timestamp). `flutter_secure_storage` для чувствительных данных. |
+| **Camera Service** | Singleton на `react-native-vision-camera`: `initialize` → `capture` → `release`. Авто-отключение через 30 с. |
+| **TTS Module** | Обёртка `react-native-tts`; FIFO-очередь; «Стоп» очищает очередь. |
+| **Storage Module** | SQLite (`react-native-sqlite-storage`): `settings` (key-value), `history` (id, type, text, timestamp). `react-native-keychain` для чувствительных данных. |
 | **Local Logger** | Structured JSON-логи (уровень, timestamp, component, message). Без PII. Ротация 5 МБ, 3 файла. |
 
 ### 8.3. Жизненный цикл ML-моделей
@@ -392,14 +399,14 @@
 | Этап | Поведение |
 |------|----------|
 | **Lazy init** | Модели загружаются в память только при первом вызове команды |
-| **Кеширование** | `Interpreter` / `TextRecognizer` хранится в памяти до `dispose` или `AppLifecycleState.paused` (> 60 с) |
-| **Выгрузка** | `didHaveMemoryPressure` → принудительный dispose; при следующем запросе — повторная загрузка |
+| **Кеширование** | TFLite model / TextRecognizer хранится в памяти до `dispose` или `AppState === 'background'` (> 60 с) |
+| **Выгрузка** | Системное предупреждение о памяти → принудительный dispose; при следующем запросе — повторная загрузка |
 
 **Потребление RAM:**
 
 | Модель | Память |
 |--------|--------|
-| Vosk ASR (в isolate) | ~80 МБ |
+| Vosk ASR (нативный модуль) | ~80 МБ |
 | TFLite SSD MobileNet v2 (INT8) | ~20 МБ |
 | TFLite Banknote classifier | ~10 МБ |
 | ML Kit OCR (управляется платформой) | ~40 МБ |
@@ -411,8 +418,10 @@
 
 Единый контракт всех модулей:
 
-```dart
-Result<T> = Success(data) | Failure(errorCode, userMessage)
+```typescript
+type Result<T> = Success<T> | Failure
+// Success: { ok: true, data: T }
+// Failure: { ok: false, errorCode: string, userMessage: string }
 ```
 
 При `Failure` Command Processor:
@@ -432,17 +441,17 @@ Result<T> = Success(data) | Failure(errorCode, userMessage)
 
 | Поток | Содержимое |
 |-------|-----------|
-| **Main Isolate** | UI, Command Processor, TTS, Camera Service |
-| **ASR Isolate** | Vosk recognition loop. Возвращает текст через `SendPort` |
-| **Inference Isolate** | TFLite inference (Object Detector / Banknote поочерёдно). Принимает `Uint8List`, возвращает `List<Detection>` |
-| **`compute()`** | Разовые CPU-задачи (image preprocessing) |
+| **JS Thread** | UI (React), Command Processor (Zustand), TTS, Camera Service |
+| **Native ASR Thread** | Vosk recognition loop. Возвращает текст через event bridge |
+| **JSI / Native Thread** | TFLite inference через `react-native-fast-tflite` (JSI-биндинг, синхронный вызов из JS). Object Detector / Banknote поочерёдно |
+| **Native Modules** | Разовые CPU-задачи (image preprocessing, ML Kit OCR) |
 
-> Все межпоточные данные — **immutable** (`Uint8List`, `String`, `List<Map>`).
+> JSI обеспечивает прямой вызов нативного кода из JS без Bridge overhead.
 
 ### 8.6. Протоколы и данные
 
 - Все вызовы — **локальные**, в памяти
-- Dart ↔ Native: Platform Channels (`MethodChannel` для ML Kit, `EventChannel` для Vosk stream)
+- JS ↔ Native: JSI-биндинги (`react-native-fast-tflite`, `react-native-vision-camera`), Native Modules (`react-native-vosk`, `@react-native-ml-kit/text-recognition`)
 - Потенциально REST/HTTPS для облака в будущем
 
 ---
@@ -454,7 +463,7 @@ Result<T> = Success(data) | Failure(errorCode, userMessage)
 | Спринт | Длительность | Задачи |
 |--------|-------------|--------|
 | **Sprint 0** | 1 неделя | Уточнение ТЗ, утверждение MVP, настройка репозитория и CI, подготовка датасетов |
-| **Sprint 1** | 3 недели | Flutter-проект, микрофон + камера, Vosk ASR, базовый TTS, тестирование ASR |
+| **Sprint 1** | 3 недели | React Native-проект, микрофон + камера, Vosk ASR, базовый TTS, тестирование ASR |
 | **Sprint 2** | 4 недели | OCR (ML Kit/Tesseract) + preprocessing, TFLite объекты, «Прочитай» и «Что это», юзабилити-тест (3–5 пользователей) |
 | **Sprint 3** | 3 недели | Оптимизация latency и энергопотребления, голосовая навигация, история, настройки, TalkBack/VoiceOver |
 | **Sprint 4** | 3 недели | Обратная связь, баг-фиксы, пилотное тестирование (10–15 пользователей), документация |
@@ -469,7 +478,7 @@ Result<T> = Success(data) | Failure(errorCode, userMessage)
 | Роль | Зона ответственности |
 |------|---------------------|
 | **Product Manager** | Планирование, коммуникации с пользователями, приоритезация |
-| **2 Mobile Developers** (Flutter) | UI, интеграция с нативными модулями |
+| **2 Mobile Developers** (React Native + TypeScript) | UI, интеграция с нативными модулями |
 | **ML/CV Engineer** | ASR, OCR, TFLite-модели, мобильная оптимизация |
 | **UX/QA** (accessibility focus) | Голосовой UX, тестирование с реальными пользователями |
 | **DevOps/Backend** (частично) | CI/CD, сборки, опциональный backend |

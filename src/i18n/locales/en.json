@@ -1,0 +1,51 @@
+{
+  "home": {
+    "screenLabel": "Home screen",
+    "voiceButton": "Speak",
+    "voiceButtonA11y": "Press and speak a command",
+    "voiceButtonHint": "Activate voice recognition to give a command",
+    "settings": "Settings",
+    "settingsA11y": "Open settings",
+    "history": "History",
+    "historyA11y": "Open recognition history"
+  },
+  "status": {
+    "ready": "Ready. Press the button and say a command.",
+    "listening": "Listening…",
+    "processing": "Processing…",
+    "error": "An error occurred"
+  },
+  "settings": {
+    "screenLabel": "Settings screen",
+    "language": "Language",
+    "voice": "Voice",
+    "speechRate": "Speech rate",
+    "clearHistory": "Clear history",
+    "clearHistoryA11y": "Clear all recognition history",
+    "clearHistoryHint": "Deletes all saved results",
+    "historyCleared": "History cleared"
+  },
+  "history": {
+    "screenLabel": "Recognition history",
+    "empty": "No entries yet"
+  },
+  "commands": {
+    "read": "Read",
+    "describe": "Describe",
+    "banknote": "Bill",
+    "help": "Help",
+    "repeat": "Repeat",
+    "stop": "Stop"
+  },
+  "errors": {
+    "notUnderstood": "Didn't understand — say again",
+    "cameraPermission": "Camera permission is required. Please enable it in settings.",
+    "micPermission": "Microphone permission is required. Please enable it in settings.",
+    "modelNotLoaded": "Download a language pack first. Connect to the internet and try again.",
+    "cameraBusy": "Camera is being used by another app — close it and try again.",
+    "noText": "No text detected — move the camera closer.",
+    "noObjects": "Could not recognize objects — try pointing the camera differently.",
+    "featureDisabled": "This feature is not available yet.",
+    "generic": "An error occurred — try again."
+  }
+}

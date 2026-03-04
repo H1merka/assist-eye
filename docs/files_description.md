@@ -12,13 +12,20 @@
 
 | Файл | Назначение |
 |------|-----------|
-| `pubspec.yaml` | Flutter-зависимости, метаданные проекта, конфигурация ассетов |
-| `analysis_options.yaml` | Правила статического анализа (`flutter_lints` + доп. ужесточения) |
-| `l10n.yaml` | Конфигурация генерации локализации (RU/EN, ARB-файлы) |
-| `.gitignore` | Правила игнорирования для Git (Flutter + Python + ML-модели) |
-| `.env.example` | Шаблон переменных окружения (скопировать в `.env`) |
+| `package.json` | Зависимости React Native, npm-скрипты (lint, test, format) |
+| `tsconfig.json` | Конфигурация TypeScript (strict mode, path aliases) |
+| `babel.config.js` | Babel preset для RN + `module-resolver` для алиасов путей |
+| `metro.config.js` | Конфигурация Metro bundler |
+| `jest.config.js` | Конфигурация Jest (preset, path mappings, transform) |
+| `jest.setup.ts` | Моки нативных модулей для тестов (tts, camera, keychain, sqlite) |
+| `.eslintrc.js` | ESLint: `@react-native` + strict TypeScript + accessibility rules |
+| `.prettierrc.js` | Prettier: single quotes, trailing comma, 100 символов |
+| `index.js` | Точка входа `AppRegistry.registerComponent` |
+| `App.tsx` | Корневой компонент: `SafeAreaProvider`, `NavigationContainer`, bootstrap |
+| `.env.example` | Шаблон переменных окружения (feature flags) |
+| `.gitignore` | Правила игнорирования для Git (RN + Python + ML-модели) |
 | `requirements.txt` | Python-зависимости для ML-скриптов (TensorFlow, Black, flake8) |
-| `README.md` | Документация проекта: стек, быстрый старт, команды сборки |
+| `README.md` | Документация проекта: стек, быстрый старт, команды |
 | `LICENSE` | Лицензия проекта |
 
 ---
@@ -27,8 +34,8 @@
 
 | Директория | Содержимое |
 |-----------|-----------|
-| `lib/` | Исходный код Flutter-приложения (Dart) |
-| `test/` | Тесты (unit, widget, accessibility) |
+| `src/` | Исходный код приложения (TypeScript + React) |
+| `__tests__/` | Тесты (unit, component, accessibility) |
 | `assets/` | Ресурсы: ML-модели, звуковые файлы |
 | `scripts/` | Вспомогательные скрипты (обучение ML-моделей, Python) |
 | `extra/` | Документация проекта (ТЗ, гайд разработки) |
@@ -37,164 +44,166 @@
 
 ---
 
-## `lib/` — Исходный код приложения
+## `src/` — Исходный код приложения
 
-### Точки входа
+### `src/core/` — Ядро (общие утилиты, константы, типы)
+
+#### `src/core/constants/`
 
 | Файл | Описание |
 |------|---------|
-| `lib/main.dart` | Точка входа. Инициализация сервисов (logger, БД, хранилище), запуск `AssistEyeApp`. ML-модели **не** загружаются здесь (lazy loading). |
-| `lib/app.dart` | Корневой виджет `MaterialApp`. Конфигурация темы, локализации, `MultiBlocProvider` для внедрения зависимостей. |
+| `appConstants.ts` | Все «магические числа» из ТЗ: пороги confidence (`0.45`, `0.35`, `0.6`), таймауты (`30 с` камера, `5 с` ASR, `60 с` модели), размеры изображений (`300×300`, `224×224`), лимиты (`50` записей, `5 МБ` лог), скорость TTS (`0.5×`–`2.0×`), touch target (`48 dp`). |
+
+#### `src/core/config/`
+
+| Файл | Описание |
+|------|---------|
+| `featureFlags.ts` | Feature flags для незавершённых функций (купюры, онбординг, позиции объектов). Когда flag = `false` — функция скрыта из UI. |
+
+#### `src/core/errors/`
+
+| Файл | Описание |
+|------|---------|
+| `result.ts` | Discriminated union `Result<T>` = `Success<T>` \| `Failure`. Фабрики `success()` / `failure()`. Проверка через `result.ok`. |
+| `errorCodes.ts` | Строковые коды ошибок по модулям (`CAMERA_BUSY`, `OCR_NO_TEXT`, `ASR_TIMEOUT` и т.д.). |
+
+#### `src/core/utils/`
+
+| Файл | Описание |
+|------|---------|
+| `logger.ts` | Structured JSON-логгер без PII. В `__DEV__` — `console.*`, в production — TODO запись в файл с ротацией при 5 МБ. |
+| `imagePreprocessing.ts` | Утилиты предобработки изображений: downscale, brightness/contrast, crop центра, resize. TODO-стабы. |
+
+#### `src/core/index.ts`
+
+| Файл | Описание |
+|------|---------|
+| `index.ts` | Barrel-export всех core-модулей. |
 
 ---
 
-### `lib/core/` — Ядро (общие утилиты, константы, типы)
-
-#### `lib/core/constants/`
-
-| Файл | Описание |
-|------|---------|
-| `app_constants.dart` | Все «магические числа» из ТЗ: пороги confidence (`0.45`, `0.35`, `0.6`), таймауты (`30 с` камера, `5 с` ASR, `60 с` модели), размеры изображений (`300×300`, `224×224`), лимиты (`50` записей истории, `5 МБ` лог). |
-
-#### `lib/core/config/`
-
-| Файл | Описание |
-|------|---------|
-| `feature_flags.dart` | Feature flags для незавершённых функций (купюры, онбординг, описание позиций объектов). Когда flag = `false` — функция скрыта из UI и возвращает _«Функция пока недоступна»_. |
-
-#### `lib/core/errors/`
-
-| Файл | Описание |
-|------|---------|
-| `result.dart` | `Result<T>` = `Success(data)` \| `Failure(errorCode, userMessage)`. Sealed class — единый контракт возврата для всех модулей. Command Processor использует pattern matching. |
-| `error_codes.dart` | Строковые коды ошибок по модулям (`CAMERA_BUSY`, `OCR_NO_TEXT`, `ASR_TIMEOUT` и т.д.). |
-
-#### `lib/core/utils/`
-
-| Файл | Описание |
-|------|---------|
-| `logger.dart` | Structured JSON-логгер. Пишет в файл, **не содержит PII**. Ротация при 5 МБ, хранит 3 последних файла. |
-| `image_preprocessing.dart` | Утилиты предобработки изображений: коррекция яркости/контраста, ресайз, crop центра, downscale. Вызывается через `compute()`. |
-
----
-
-### `lib/features/` — Модули (feature-based архитектура)
+### `src/features/` — Модули (feature-based архитектура)
 
 > Каждый модуль содержит:
-> - **`domain/`** — Абстрактные интерфейсы и модели данных (контракты)
-> - **`data/`** — Конкретные реализации (работа с библиотеками)
-> - **`presentation/`** — BLoC, виджеты (если модуль имеет свой UI)
+> - **`domain/`** — TypeScript-интерфейсы и модели данных (контракты)
+> - **`data/`** — Конкретные реализации (работа с нативными модулями)
+> - **`store/`** — Zustand-хранилище (если модуль управляет состоянием)
 
-#### 🎙 `voice_interface/` — ASR (распознавание речи)
-
-| Файл | Описание |
-|------|---------|
-| `domain/speech_recognizer.dart` | Абстрактный интерфейс ASR |
-| `data/vosk_speech_recognizer.dart` | Реализация на **Vosk**. Работает в отдельном Dart Isolate (`SendPort`/`ReceivePort`). Модели ~45 МБ (RU) + ~40 МБ (EN), скачиваются при первом выборе языка. |
-| `presentation/voice_button_widget.dart` | Кнопка активации ≥ 48×48 dp с `Semantics` |
-
-#### 🧠 `command_processor/` — Центральный оркестратор (BLoC)
+#### 🎙 `voiceInterface/` — ASR (распознавание речи)
 
 | Файл | Описание |
 |------|---------|
-| `domain/command.dart` | Enum `CommandType` (`read`, `describe`, `banknote`, `help`, `repeat`, `stop`, `unknown`) и класс `Command` |
-| `domain/command_processor.dart` | Абстрактный интерфейс: парсинг (regex) + выполнение |
-| `presentation/command_bloc.dart` | **BLoC**: текст от ASR → парсинг → dispatch в модуль → результат → TTS. Error Boundary: каждый модуль обёрнут в `try/catch` |
-| `presentation/command_event.dart` | События: `VoiceCommandReceived`, `StopRequested`, `RepeatRequested`, `ListenRequested` |
-| `presentation/command_state.dart` | Состояния: `Initial`, `Listening`, `Processing`, `Success`, `Error` |
+| `domain/speechRecognizer.ts` | TypeScript-интерфейс ASR: `initialize`, `startListening`, `stopListening`, `dispose`, `onResult` callback |
+| `data/voskSpeechRecognizer.ts` | Реализация на **Vosk** (`react-native-vosk`). Модели ~45 МБ (RU) + ~40 МБ (EN), скачиваются при первом использовании. |
+
+#### 🧠 `commandProcessor/` — Центральный оркестратор (Zustand)
+
+| Файл | Описание |
+|------|---------|
+| `domain/command.ts` | Enum `CommandType` (`Read`, `Describe`, `Banknote`, `Help`, `Repeat`, `Stop`, `Unknown`) + `parseCommand()` с regex для RU/EN с приоритетами |
+| `store/commandStore.ts` | **Zustand store**: `ProcessorState` (Idle / Listening / Processing / Success / Error), действия: `processVoiceInput`, `requestStop`, `requestRepeat` |
 
 #### 📝 `ocr/` — Распознавание текста (OCR)
 
 | Файл | Описание |
 |------|---------|
-| `domain/ocr_service.dart` | Абстрактный интерфейс: `imageBytes → Result<String>` |
-| `data/ml_kit_ocr_service.dart` | Основная реализация: **Google ML Kit Text Recognition v2**. Офлайн, кириллица + латиница. Вызывается из main isolate (Platform Channel). |
-| `data/tesseract_ocr_service.dart` | Fallback для устройств без GMS (Huawei) |
+| `domain/ocrService.ts` | TypeScript-интерфейс: `recognizeText(imageUri) → Promise<Result<string>>` |
+| `data/mlKitOcrService.ts` | Основная реализация: **ML Kit** (`@react-native-ml-kit/text-recognition`). Офлайн, кириллица + латиница. |
+| `data/tesseractOcrService.ts` | Fallback для устройств без GMS (Huawei) |
 
-#### 👁 `object_detection/` — Детекция объектов
-
-| Файл | Описание |
-|------|---------|
-| `domain/detection_result.dart` | Модель: `label`, `confidence`, `boundingBox` |
-| `domain/object_detector.dart` | Абстрактный интерфейс: `imageBytes → Result<List<DetectionResult>>` |
-| `data/tflite_object_detector.dart` | **TFLite SSD MobileNet v2 INT8** (~4 МБ, 80 COCO-классов). Inference в отдельном Isolate. NMS (IoU=0.45), фильтрация (≥0.45 обычные, ≥0.35 безопасность). Делегаты: NNAPI (Android), Core ML (iOS). |
-
-#### 💵 `banknote_classifier/` — Классификатор купюр *(за feature flag!)*
+#### 👁 `objectDetection/` — Детекция объектов
 
 | Файл | Описание |
 |------|---------|
-| `domain/banknote_classifier.dart` | Абстрактный интерфейс: `imageBytes → Result<String>` |
-| `data/tflite_banknote_classifier.dart` | **MobileNet v3-Small**, fine-tuned. Купюры: ₽ (50–5000) и $ (1–100). Pipeline: crop 60% → resize 224×224 → inference. Confidence < 0.6 → _«Не уверен»_. |
+| `domain/detectionResult.ts` | Модель: `label`, `confidence`, `boundingBox` |
+| `domain/objectDetector.ts` | TypeScript-интерфейс: `detect(imageUri) → Promise<Result<DetectionResult[]>>` |
+| `data/tfliteObjectDetector.ts` | **TFLite SSD MobileNet v2 INT8** через `react-native-fast-tflite` (JSI). NMS (IoU=0.45), фильтрация (≥0.45 обычные, ≥0.35 безопасность). NNAPI (Android), Core ML (iOS). |
+
+#### 💵 `banknoteClassifier/` — Классификатор купюр *(за feature flag!)*
+
+| Файл | Описание |
+|------|---------|
+| `domain/banknoteClassifier.ts` | TypeScript-интерфейс: `classifyBanknote(imageUri) → Promise<Result<string>>` |
+| `data/tfliteBanknoteClassifier.ts` | **MobileNet v3-Small**, fine-tuned. Pipeline: crop 60% → resize 224×224 → inference. Confidence < 0.6 → «Не уверен». |
 
 #### 🔊 `tts/` — Синтез речи (TTS)
 
 | Файл | Описание |
 |------|---------|
-| `domain/tts_service.dart` | Абстрактный интерфейс: `speak`, `stop`, `setRate`, `setVolume`, `setVoice`, `getAvailableVoices` |
-| `data/flutter_tts_service.dart` | Реализация через `flutter_tts`. Очередь сообщений FIFO. «Стоп» очищает очередь. Скорость 0.5×–2.0×. |
+| `domain/ttsService.ts` | TypeScript-интерфейс: `speak`, `stop`, `setRate`, `getAvailableVoices` |
+| `data/reactNativeTtsService.ts` | Реализация через `react-native-tts`. FIFO-очередь сообщений. «Стоп» очищает очередь. Скорость 0.5×–2.0×. |
 
 #### 📷 `camera/` — Сервис камеры
 
 | Файл | Описание |
 |------|---------|
-| `data/camera_service.dart` | **Singleton**. Разрешение макс. 1280×960. Авто-отключение через 30 с бездействия. Один кадр на команду (не видеопоток). |
+| `data/cameraService.ts` | **Singleton** на основе `react-native-vision-camera`. Авто-отключение через 30 с бездействия. Один кадр на команду. |
 
 #### 💾 `storage/` — Хранилище данных
 
 | Файл | Описание |
 |------|---------|
-| `domain/models/history_entry.dart` | Модель записи истории (`type`, `resultText`, `createdAt`). Включает `fromMap`/`toMap` для SQLite. |
-| `domain/history_repository.dart` | Интерфейс: `addEntry`, `getLastEntry`, `getAllEntries`, `clearHistory`. Лимит 50 записей. |
-| `domain/settings_repository.dart` | Интерфейс key-value: `getString`, `setString`, `getDouble`, `setBool`. Ключи: `language`, `tts_voice` и др. |
-| `data/database_helper.dart` | SQLite через `sqflite`. Таблицы: `settings` (key-value), `history` (id, type, result_text, created_at). Миграции через `onCreate`/`onUpgrade`. |
-| `data/secure_storage_service.dart` | `flutter_secure_storage` (AES-256). Android Keystore / iOS Keychain. |
+| `domain/historyEntry.ts` | Модель записи истории (`type`, `resultText`, `createdAt`). |
+| `domain/historyRepository.ts` | Интерфейс: `addEntry`, `getLastEntry`, `getAllEntries`, `clearHistory`. Лимит 50 записей. |
+| `domain/settingsRepository.ts` | Интерфейс key-value: `getString`, `setString`, `getNumber`, `setBool`. |
+| `data/databaseHelper.ts` | SQLite через `react-native-sqlite-storage`. Таблицы: `settings` (key-value), `history` (id, type, result_text, created_at). Экспортирует `historyRepository` и `settingsRepository`. |
+| `data/secureStorageService.ts` | `react-native-keychain` (AES-256). Android Keystore / iOS Keychain. |
 
 ---
 
-### `lib/ui/` — Пользовательский интерфейс
+### `src/ui/` — Пользовательский интерфейс
 
-#### `lib/ui/theme/`
-
-| Файл | Описание |
-|------|---------|
-| `app_theme.dart` | Светлая и тёмная тема. Material 3. Высокий контраст, минимальный touch-target 48×48. |
-
-#### `lib/ui/screens/`
+#### `src/ui/theme/`
 
 | Файл | Описание |
 |------|---------|
-| `home_screen.dart` | Главный экран: кнопка голоса (центр) + статус. Навигация в настройки и историю. Все виджеты с `Semantics` (TalkBack/VoiceOver). |
-| `settings_screen.dart` | Настройки: язык, голос TTS, скорость, очистка |
-| `history_screen.dart` | Список последних 50 распознаваний |
+| `appTheme.ts` | Светлая и тёмная цветовая палитра, типографика, accessibility-стили (min touch target 48×48). |
 
-#### `lib/ui/widgets/`
+#### `src/ui/screens/`
 
 | Файл | Описание |
 |------|---------|
-| `accessible_button.dart` | Переиспользуемая кнопка: гарантирует `Semantics` label и минимальный размер 48×48 dp |
+| `HomeScreen.tsx` | Главный экран: кнопка голоса 200×200 (центр) + статус с `accessibilityLiveRegion="polite"`. Навигация в настройки и историю. |
+| `SettingsScreen.tsx` | Настройки: язык, голос TTS, скорость, очистка |
+| `HistoryScreen.tsx` | FlatList последних 50 распознаваний с empty state |
+
+#### `src/ui/components/`
+
+| Файл | Описание |
+|------|---------|
+| `AccessibleButton.tsx` | Переиспользуемая кнопка с `accessibilityRole`, `accessibilityLabel`, `accessibilityHint`, `accessibilityState`, min 48×48 dp |
 
 ---
 
-### `lib/l10n/` — Локализация
+### `src/navigation/` — Навигация
 
 | Файл | Описание |
 |------|---------|
-| `app_en.arb` | Английские строки интерфейса |
-| `app_ru.arb` | Русские строки интерфейса. Содержат: команды, статусы, ошибки, настройки, подсказку «Помощь». Поддержка плейсхолдеров. |
+| `RootNavigator.tsx` | `@react-navigation/native-stack`: Home (без заголовка), Settings, History |
 
 ---
 
-## `test/` — Тесты
+### `src/i18n/` — Интернационализация
 
 | Файл | Описание |
 |------|---------|
-| `core/errors/result_test.dart` | Unit-тесты для `Result<T>` (Success, Failure, sealed class pattern matching) |
-| `features/command_processor/command_bloc_test.dart` | Тесты BLoC: парсинг команд, dispatch в модули, Error Boundary, «Стоп», «Повтори» |
-| `features/ocr/ocr_service_test.dart` | Тесты OCR: успех, пустой текст, низкий confidence |
-| `features/object_detection/object_detector_test.dart` | Тесты CV: топ-3, NMS, пороги confidence, пониженный порог для объектов безопасности |
-| `features/storage/database_helper_test.dart` | Тесты SQLite: CRUD настроек, лимит 50 записей, получение последней записи, очистка |
-| `ui/screens/home_screen_test.dart` | Widget-тест: `HomeScreen` рендерится без ошибок |
-| `accessibility/semantics_test.dart` | Тесты доступности (тег `accessibility`): `Semantics` labels, минимальные размеры кнопок 48×48 dp. Запуск: `flutter test --tags=accessibility` |
+| `i18n.ts` | Инициализация `i18next` с auto-detect языка через `react-native-localize`, fallback `ru` |
+| `locales/en.json` | Английские строки интерфейса |
+| `locales/ru.json` | Русские строки интерфейса: команды, статусы, ошибки, настройки |
+
+---
+
+## `__tests__/` — Тесты
+
+| Файл | Описание |
+|------|---------|
+| `core/result.test.ts` | Unit-тесты для `Result<T>` (Success, Failure, discriminated union) |
+| `features/commandProcessor/command.test.ts` | Тесты парсинга команд: RU/EN, приоритет «стоп», fallback Unknown |
+| `features/ocr/ocrService.test.ts` | Тесты OCR-интерфейса (стаб) |
+| `features/objectDetection/objectDetector.test.ts` | Тесты CV: `isReady()`, detect без init, initialize, dispose |
+| `features/storage/databaseHelper.test.ts` | Тесты SQLite: пустая история, дефолтные настройки |
+| `ui/HomeScreen.test.tsx` | Component-тест: `HomeScreen` рендерится с мокнутой навигацией + i18n |
+| `accessibility/semantics.test.tsx` | Тесты доступности: `accessibilityRole`, `accessibilityLabel`, `accessibilityHint`, состояние disabled |
 
 ---
 
@@ -211,7 +220,7 @@
 
 | Файл | Описание |
 |------|---------|
-| `scripts/ml/train_banknote_classifier.py` | Python: обучение классификатора купюр (MobileNet v3-Small, fine-tuning, Google Colab) |
+| `scripts/ml/train_banknote_classifier.py` | Python: обучение классификатора купюр (MobileNet v3-Small, fine-tuning) |
 | `scripts/ml/convert_tflite.py` | Python: конвертация моделей в TFLite INT8 (post-training quantization) |
 
 ---
@@ -220,8 +229,8 @@
 
 | Файл | Описание |
 |------|---------|
-| `workflows/ci.yml` | CI на каждый PR: `format` → `analyze` → `test` → `accessibility test` → `debug APK` |
-| `workflows/release.yml` | Release при теге `v*`: `analyze` → `test` → `release APK` → GitHub Release |
+| `workflows/ci.yml` | CI на каждый PR: `tsc` → `lint` → `format` → `test` → `accessibility test` → `debug APK` |
+| `workflows/release.yml` | Release при теге `v*`: `tsc` → `test` → `release APK` → GitHub Release |
 | `copilot-instructions.md` | Инструкции для AI-агентов (Copilot и др.) |
 
 ---
@@ -239,23 +248,25 @@
 
 1. **`android/` и `ios/` отсутствуют** — сгенерируйте их командой:
    ```bash
-   flutter create .
+   npx react-native init AssistEye --directory .
    ```
+   Или используйте `npx react-native-community/cli init`.
 
 2. **ML-модели не включены в репозиторий** (см. `.gitignore`) — скачиваются при первом использовании или размещаются вручную в `assets/models/`.
 
-3. Все файлы в `lib/features/` содержат **TODO-комментарии** с описанием того, что нужно реализовать. Читайте их как спецификацию задачи.
+3. Все файлы в `src/features/` содержат **TODO-комментарии** с описанием того, что нужно реализовать.
 
-4. **Feature flags** находятся в `lib/core/config/feature_flags.dart` — купюры и онбординг по умолчанию **отключены**.
+4. **Feature flags** находятся в `src/core/config/featureFlags.ts` — купюры и онбординг по умолчанию **отключены**.
 
 5. **Запуск тестов:**
    ```bash
-   flutter test                       # все тесты
-   flutter test --tags=accessibility  # только тесты доступности
+   npm test                       # все тесты
+   npm run test:accessibility     # только тесты доступности
    ```
 
 6. **Перед коммитом:**
    ```bash
-   dart format --set-exit-if-changed .
-   flutter analyze --fatal-warnings
+   npx tsc --noEmit
+   npm run lint
+   npm run format
    ```
