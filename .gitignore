@@ -130,6 +130,7 @@ Thumbs.db
 # User ignores
 .github/
 project_docs/
+assets/
 
 # Expo
 .expo/
