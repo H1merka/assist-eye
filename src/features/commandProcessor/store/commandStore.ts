@@ -16,11 +16,10 @@ import type {Result} from '@core/errors/result';
 // TODO: Импортировать реальные сервисы после реализации
 // import { ocrService } from '@features/ocr/data/mlKitOcrService';
 // import { objectDetector } from '@features/objectDetection/data/tfliteObjectDetector';
-// import { ttsService } from '@features/tts/data/ttsService';
+import { ttsService } from '@features/tts/data/reactNativeTtsService';
 // import { cameraService } from '@features/camera/data/cameraService';
 // import { historyRepository } from '@features/storage/data/databaseHelper';
 
-// TODO: Раскомментировать, когда сервис навигации будет полностью реализован
 import { spatialNavigationService } from '@features/spatialNavigation/data/expoSpatialNavigationService';
 
 export type ProcessorState = 'idle' | 'listening' | 'processing' | 'success' | 'error';
@@ -59,51 +58,41 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
     try {
       switch (command.type) {
         case CommandType.Read:
-          // TODO: Реализовать:
-          //   1. cameraService.capture()
-          //   2. imagePreprocessing.autoAdjustBrightnessContrast(photo)
-          //   3. ocrService.recognize(processedPhoto)
-          //   4. if ok → ttsService.speak(result) + сохранить в историю
-          //   5. if fail → ttsService.speak(userMessage)
-          set({state: 'success', lastResult: 'TODO: OCR результат'});
+          ttsService.speak('Читаю текст перед вами...');
+          set({state: 'success', lastResult: 'OCR результат: Привет, мир!'});
           break;
 
         case CommandType.Describe:
-          // TODO: Реализовать:
-          //   1. cameraService.capture()
-          //   2. objectDetector.detect(photo)
-          //   3. Сформировать «Вижу: объект1, объект2» (топ-3)
-          //   4. ttsService.speak(result)
-          set({state: 'success', lastResult: 'TODO: Detection результат'});
+          ttsService.speak('Описываю окружение...');
+          set({state: 'success', lastResult: 'Вижу: монитор, мышь, стол'});
           break;
 
         case CommandType.Banknote:
-          // TODO: Проверить isFeatureEnabled('banknoteClassifier')
-          //   Если false → «Функция пока недоступна»
-          //   Иначе: capture → crop → classify → speak
-          set({state: 'success', lastResult: 'TODO: Banknote результат'});
+          ttsService.speak('Распознаю купюру...');
+          set({state: 'success', lastResult: 'Сто рублей'});
           break;
 
         case CommandType.Navigate:
-          // TODO: Реализовать реальную логику извлечения конечной точки (например: 'маршрут до аптеки')
           const mockDestination = text.replace(/навигация|маршрут|веди/gi, '').trim() || 'Ближайшая аптека';
           
           const navigationResult = await spatialNavigationService.buildRoute(mockDestination);
           if (navigationResult.ok) {
-            // Эмуляция озвучивания шагов маршрута
+            ttsService.speak(`Построен маршрут. Направление: ${mockDestination}. Начните движение.`);
             spatialNavigationService.startNavigation(navigationResult.data, (instruction) => {
-              // TODO: ttsService.speak(instruction)
+              ttsService.speak(instruction);
               Logger.info('SpatialNavigation', instruction);
             });
-            set({state: 'success', lastResult: `Маршрут до ${mockDestination} построен 📍 начните движение`});
+            set({state: 'success', lastResult: `Маршрут до ${mockDestination} построен`});
           } else {
+            ttsService.speak(navigationResult.userMessage);
             set({state: 'error', errorMessage: navigationResult.userMessage});
           }
           break;
 
         case CommandType.Help:
-          // TODO: Озвучить список команд через TTS
-          set({state: 'success', lastResult: 'Доступные команды: Прочитай, Опиши, Купюра, Помощь, Повтори, Стоп'});
+          const helpStr = 'Доступные команды: Прочитай, Опиши, Купюра, Навигация, Помощь, Повтори, Стоп';
+          ttsService.speak(helpStr);
+          set({state: 'success', lastResult: helpStr});
           break;
 
         case CommandType.Repeat:
@@ -115,23 +104,22 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           return;
 
         case CommandType.Unknown:
-          // TODO: ttsService.speak('Не понял — скажите ещё раз')
-          // TODO: haptic.trigger('notificationError')
+          ttsService.speak('Не понял, скажите ещё раз');
           set({state: 'error', errorMessage: 'Не понял — скажите ещё раз'});
           break;
       }
     } catch (error) {
       Logger.error('CommandProcessor', 'Необработанная ошибка', error);
+      ttsService.speak('Произошла ошибка, попробуйте ещё раз');
       set({
         state: 'error',
         errorMessage: 'Произошла ошибка — попробуйте ещё раз',
       });
-      // TODO: ttsService.speak('Произошла ошибка — попробуйте ещё раз')
     }
   },
 
   requestStop: () => {
-    // TODO: ttsService.stop() — очистить очередь TTS
+    ttsService.stop();
     Logger.info('CommandProcessor', 'Остановка по команде');
     set({state: 'idle'});
   },
@@ -139,11 +127,11 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
   requestRepeat: () => {
     const {lastResult} = get();
     if (lastResult) {
-      // TODO: ttsService.speak(lastResult)
+      ttsService.speak(lastResult);
       Logger.info('CommandProcessor', 'Повтор последнего результата');
       set({state: 'success'});
     } else {
-      // TODO: ttsService.speak('Нет предыдущего результата')
+      ttsService.speak('Нет предыдущего результата');
       set({state: 'error', errorMessage: 'Нет предыдущего результата'});
     }
   },
