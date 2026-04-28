@@ -20,6 +20,9 @@ import type {Result} from '@core/errors/result';
 // import { cameraService } from '@features/camera/data/cameraService';
 // import { historyRepository } from '@features/storage/data/databaseHelper';
 
+// TODO: Раскомментировать, когда сервис навигации будет полностью реализован
+import { spatialNavigationService } from '@features/spatialNavigation/data/expoSpatialNavigationService';
+
 export type ProcessorState = 'idle' | 'listening' | 'processing' | 'success' | 'error';
 
 interface CommandProcessorState {
@@ -79,6 +82,23 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           //   Если false → «Функция пока недоступна»
           //   Иначе: capture → crop → classify → speak
           set({state: 'success', lastResult: 'TODO: Banknote результат'});
+          break;
+
+        case CommandType.Navigate:
+          // TODO: Реализовать реальную логику извлечения конечной точки (например: 'маршрут до аптеки')
+          const mockDestination = text.replace(/навигация|маршрут|веди/gi, '').trim() || 'Ближайшая аптека';
+          
+          const navigationResult = await spatialNavigationService.buildRoute(mockDestination);
+          if (navigationResult.ok) {
+            // Эмуляция озвучивания шагов маршрута
+            spatialNavigationService.startNavigation(navigationResult.data, (instruction) => {
+              // TODO: ttsService.speak(instruction)
+              Logger.info('SpatialNavigation', instruction);
+            });
+            set({state: 'success', lastResult: `Маршрут до ${mockDestination} построен 📍 начните движение`});
+          } else {
+            set({state: 'error', errorMessage: navigationResult.userMessage});
+          }
           break;
 
         case CommandType.Help:
