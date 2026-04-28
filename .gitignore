@@ -45,9 +45,6 @@ ios/**/DerivedData/
 ios/.xcode.env.local
 ios/**/xcuserdata/
 
-# CocoaPods
-ios/Podfile.lock
-
 # ------------------- Python (ML-скрипты) -------------------
 
 __pycache__/
@@ -130,6 +127,30 @@ Thumbs.db
 # ------------------- Логи -------------------
 *.log
 
-# Extras
-extra/
+# User ignores
 .github/
+project_docs/
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Vosk archives and directories
+assets/models/vosk-*
+*.zip
+*.tar.gz
+
+# Google Service / Firebase
+google-services.json
+GoogleService-Info.plist
+
+# React Native / Metro
+.rncache
+haste-map-* 
+metro-cache/
+
+# Keys' artifacts
+*.mobileprovision
+*.pem
+*.p12
