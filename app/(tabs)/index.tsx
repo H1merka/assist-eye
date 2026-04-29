@@ -4,6 +4,7 @@ import {
   StyleSheet,
   Text,
   View,
+  PermissionsAndroid,
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -20,7 +21,17 @@ export default function MainScreen() {
   const processVoiceInput = useCommandProcessor((state) => state.processVoiceInput);
 
   useEffect(() => {
-    speechRecognizer.initialize('ru');
+    const initVosk = async () => {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          console.warn("User rejected RECORD_AUDIO permission.");
+          return;
+        }
+      }
+      await speechRecognizer.initialize('ru');
+    };
+    initVosk();
     
     speechRecognizer.onResult((text) => {
         setStatus('processing');
