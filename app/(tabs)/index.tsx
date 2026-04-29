@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -11,10 +11,26 @@ import { useApp } from '@/context/AppContext';
 import MainButton from '@/components/MainButton';
 import StatusFeedback from '@/components/StatusFeedback';
 import { COLORS } from '@/constants/Colors';
+import { speechRecognizer } from '@features/voiceInterface/data/voskSpeechRecognizer';
+import { useCommandProcessor } from '@features/commandProcessor/store/commandStore';
 
 export default function MainScreen() {
   const router = useRouter();
   const { status, setStatus, t } = useApp();
+  const processVoiceInput = useCommandProcessor((state) => state.processVoiceInput);
+
+  useEffect(() => {
+    speechRecognizer.initialize('ru');
+    
+    speechRecognizer.onResult((text) => {
+        setStatus('processing');
+        processVoiceInput(text);
+    });
+
+    return () => {
+        speechRecognizer.stopListening();
+    };
+  }, []);
 
   const statusMessage = (() => {
     switch (status) {
@@ -29,9 +45,15 @@ export default function MainScreen() {
   const buttonA11yLabel = t('start');
   const buttonA11yHint = t('startHint');
 
-  const handlePress = () => {
-    setStatus('idle');
-    router.push('/camera');
+  const handlePress = async () => {
+    if (status === 'listening') {
+       await speechRecognizer.stopListening();
+       setStatus('idle');
+       return;
+    }
+    
+    setStatus('listening');
+    await speechRecognizer.startListening();
   };
 
   return (
@@ -59,7 +81,7 @@ export default function MainScreen() {
             accessibilityLabel={buttonA11yLabel}
             accessibilityHint={buttonA11yHint}
             onPress={handlePress}
-            isActive={false}
+            isActive={status === 'listening'}
           />
         </View>
 

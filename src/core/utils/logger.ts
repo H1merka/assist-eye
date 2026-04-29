@@ -10,7 +10,7 @@
  * { level, timestamp, component, message, ?details }
  */
 
-import {LOG_MAX_FILE_SIZE_BYTES, LOG_MAX_FILES} from '@core/constants/appConstants';
+// import {LOG_MAX_FILE_SIZE_BYTES, LOG_MAX_FILES} from '@core/constants/appConstants';
 
 // TODO: Подключить react-native-fs для записи в файл.
 // В текущей реализации — упрощённый вывод в console (только dev).

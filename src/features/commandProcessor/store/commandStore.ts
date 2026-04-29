@@ -11,7 +11,7 @@
 import {create} from 'zustand';
 import {CommandType, parseCommand} from '../domain/command';
 import {Logger} from '@core/utils/logger';
-import type {Result} from '@core/errors/result';
+// import type {Result} from '@core/errors/result';
 
 // TODO: Импортировать реальные сервисы после реализации
 // import { ocrService } from '@features/ocr/data/mlKitOcrService';
