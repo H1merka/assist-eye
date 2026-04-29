@@ -1,48 +1,26 @@
-/**
- * Command Processor — центральный оркестратор приложения.
- *
- * Zustand store, управляющий потоком:
- *   ASR текст → parseCommand → dispatch в модуль → результат → TTS
- *
- * Error Boundary: каждый модуль обёрнут в try/catch,
- * при исключении — озвучивается понятное сообщение.
- */
-
 import {create} from 'zustand';
 import {CommandType, parseCommand} from '../domain/command';
 import {Logger} from '@core/utils/logger';
-// import type {Result} from '@core/errors/result';
 
-// TODO: Импортировать реальные сервисы после реализации
-// import { ocrService } from '@features/ocr/data/mlKitOcrService';
-// import { objectDetector } from '@features/objectDetection/data/tfliteObjectDetector';
 import { ttsService } from '@features/tts/data/reactNativeTtsService';
-// import { cameraService } from '@features/camera/data/cameraService';
-// import { historyRepository } from '@features/storage/data/databaseHelper';
-
+import { TfliteObjectDetector } from '@features/objectDetection/data/tfliteObjectDetector';
+import { TfliteBanknoteClassifier } from '@features/banknoteClassifier/data/tfliteBanknoteClassifier';
+import { capturePhoto } from '@features/camera/data/cameraService';
 import { spatialNavigationService } from '@features/spatialNavigation/data/expoSpatialNavigationService';
 
 export type ProcessorState = 'idle' | 'listening' | 'processing' | 'success' | 'error';
 
 interface CommandProcessorState {
-  /** Текущее состояние обработки */
   state: ProcessorState;
-
-  /** Последний результат (для команды «Повтори») */
   lastResult: string | null;
-
-  /** Текст последней ошибки */
   errorMessage: string | null;
-
-  /** Обработать текст, полученный от ASR */
   processVoiceInput: (text: string) => Promise<void>;
-
-  /** Запросить остановку текущей операции */
   requestStop: () => void;
-
-  /** Повторить последний результат */
   requestRepeat: () => void;
 }
+
+const objectDetector = new TfliteObjectDetector();
+const banknoteClassifier = new TfliteBanknoteClassifier();
 
 export const useCommandProcessor = create<CommandProcessorState>((set, get) => ({
   state: 'idle',
@@ -63,13 +41,55 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           break;
 
         case CommandType.Describe:
-          ttsService.speak('Описываю окружение...');
-          set({state: 'success', lastResult: 'Вижу: монитор, мышь, стол'});
+          ttsService.speak('Делаю снимок для описания...');
+          
+          if (!objectDetector.isReady()) await objectDetector.initialize();
+          
+          const cameraResultObj = await capturePhoto();
+          if (!cameraResultObj.ok) {
+            ttsService.speak(cameraResultObj.userMessage);
+            set({state: 'error', errorMessage: cameraResultObj.userMessage});
+            break;
+          }
+
+          const detectResult = await objectDetector.detect(cameraResultObj.data);
+          if (!detectResult.ok) {
+             const failMsg = detectResult.userMessage || 'Объекты не найдены';
+             ttsService.speak(failMsg);
+             set({state: 'error', errorMessage: failMsg});
+          } else if (detectResult.data.length > 0) {
+             const labelsStr = detectResult.data.map(r => r.label).join(', ');
+             const resultMsg = `Вижу: ${labelsStr}`;
+             ttsService.speak(resultMsg);
+             set({state: 'success', lastResult: resultMsg});
+          } else {
+             const failMsg = 'Объекты не найдены';
+             ttsService.speak(failMsg);
+             set({state: 'error', errorMessage: failMsg});
+          }
           break;
 
         case CommandType.Banknote:
-          ttsService.speak('Распознаю купюру...');
-          set({state: 'success', lastResult: 'Сто рублей'});
+          ttsService.speak('Анализирую купюру...');
+          
+          if (!banknoteClassifier.isReady()) await banknoteClassifier.initialize();
+          
+          const cameraResultBank = await capturePhoto();
+          if (!cameraResultBank.ok) {
+            ttsService.speak(cameraResultBank.userMessage);
+            set({state: 'error', errorMessage: cameraResultBank.userMessage});
+            break;
+          }
+
+          const banknoteResult = await banknoteClassifier.classify(cameraResultBank.data);
+          if (banknoteResult.ok) {
+            const finalMsg = `Определено: ${banknoteResult.data}`;
+            ttsService.speak(finalMsg);
+            set({state: 'success', lastResult: finalMsg});
+          } else {
+            ttsService.speak(banknoteResult.userMessage);
+            set({state: 'error', errorMessage: banknoteResult.userMessage});
+          }
           break;
 
         case CommandType.Navigate:

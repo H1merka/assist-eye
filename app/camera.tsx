@@ -5,6 +5,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { COLORS } from '@/constants/Colors';
 import { useApp } from '@/context/AppContext';
 import ResultCard from '@/components/ResultCard';
+import { setCameraRef } from '@features/camera/data/cameraService';
 
 type CameraPhase = 'preview' | 'processing' | 'result';
 
@@ -32,6 +33,12 @@ export default function CameraScreen() {
   const [phase, setPhase] = useState<CameraPhase>('preview');
   const [isCapturing, setIsCapturing] = useState(false);
   const [resultText, setResultText] = useState('');
+
+  useEffect(() => {
+    if (cameraRef.current) {
+      setCameraRef(cameraRef as any); // expo-camera != vision-camera, но контракт takePhoto совместим
+    }
+  }, [cameraRef.current]);
 
   useEffect(() => {
     if (permission?.granted && phase === 'preview' && !isCapturing) {
