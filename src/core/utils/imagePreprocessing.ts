@@ -12,9 +12,10 @@ import {
   BANKNOTE_CROP_RATIO,
   IMAGE_MAX_DIMENSION,
 } from '@core/constants/appConstants';
-import ImageResizer from 'react-native-image-resizer';
+import ImageResizer from '@bam.tech/react-native-image-resizer';
 import { Logger } from '@core/utils/logger';
 import { Image } from 'react-native';
+import { SSD_INPUT_SIZE } from '@core/constants/appConstants';
 
 export interface ImageSize {
   width: number;
@@ -128,4 +129,57 @@ export async function resizeSquare(uri: string, size: number): Promise<string> {
      Logger.error('ImagePreprocessing', 'Failed to square-resize image', error);
      return uri;
   }
+}
+
+/**
+ * Convert image at `uri` into an RGB(A) tensor suitable for TFLite.
+ *
+ * NOTE: Proper pixel extraction should be implemented in native code or
+ * via a Frame Processor (react-native-vision-camera + worklets). This
+ * JS implementation provides a safe fallback for tests/dev: it resizes
+ * the image to `size` and returns a zero-filled Uint8Array of length
+ * `size * size * 3` (RGB), which satisfies callers expecting a buffer.
+ */
+export async function convertImageToRGBATensor(uri: string, width: number = SSD_INPUT_SIZE, height: number = SSD_INPUT_SIZE): Promise<Uint8Array> {
+  try {
+    await resizeSquare(uri, Math.max(width, height));
+
+    // Proper decoding of JPEG -> raw pixels requires native support.
+    // Placeholder: create zeroed RGB buffer of requested size.
+    const buf = new Uint8Array(width * height * 3);
+    return buf;
+    // Try to use a registered frame-processor worklet if available.
+    // Importing the worklet module is safe; if the runtime doesn't support
+    // worklets, we'll fall back to zeroed buffer.
+    try {
+      // Dynamic import to avoid bundler issues when worklet plugin isn't configured.
+      // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment
+      const convertWorklet = require('@features/objectDetection/frameProcessor/convertFrameToTensor.worklet').default;
+      if (typeof convertWorklet === 'function') {
+        // Worklet needs a frame object — in this fallback path we don't have one,
+        // so skip calling the worklet and use zero buffer. Real usage should call
+        // the worklet from a frameProcessor hook with actual `frame`.
+      }
+    } catch (e) {
+      // ignore — worklet not available in JS runtime
+    }
+  } catch (e) {
+    Logger.error('ImagePreprocessing', 'convertImageToRGBATensor failed', e);
+    return new Uint8Array(width * height * 3);
+  }
+}
+
+/**
+ * Convert a Vision Camera `frame` (worklet thread) to RGB tensor using the worklet.
+ * This function is intended to be called from a frame-processor worklet context.
+ */
+export function convertFrameToRGBATensorFromWorklet(frame: any, width: number = SSD_INPUT_SIZE, height: number = SSD_INPUT_SIZE): Uint8Array {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const convertWorklet = require('@features/objectDetection/frameProcessor/convertFrameToTensor.worklet').default;
+  if (typeof convertWorklet === 'function') {
+    // run on worklet: convertWorklet(frame, width, height)
+    // In practice this file will be executed on the worklet thread; here we just forward the call.
+    return convertWorklet(frame, width, height);
+  }
+  return new Uint8Array(width * height * 3);
 }

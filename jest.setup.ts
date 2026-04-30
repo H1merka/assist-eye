@@ -41,3 +41,15 @@ jest.mock('react-native-sqlite-storage', () => ({
     executeSql: jest.fn(),
   }),
 }));
+
+// Мок для react-native-fs
+jest.mock('react-native-fs', () => ({
+  DocumentDirectoryPath: '/tmp',
+  MainBundlePath: '/bundle',
+  exists: jest.fn().mockResolvedValue(false),
+  stat: jest.fn().mockResolvedValue({size: 0}),
+  appendFile: jest.fn().mockResolvedValue(undefined),
+  unlink: jest.fn().mockResolvedValue(undefined),
+  moveFile: jest.fn().mockResolvedValue(undefined),
+  readFile: jest.fn().mockResolvedValue(''),
+}));

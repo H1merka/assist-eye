@@ -1,7 +1,7 @@
 /** @type {import('jest').Config} */
 module.exports = {
   preset: 'react-native',
-  setupFilesAfterSetup: ['./jest.setup.ts'],
+  setupFilesAfterEnv: ['./jest.setup.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   moduleNameMapper: {
     '^@core/(.*)$': '<rootDir>/src/core/$1',

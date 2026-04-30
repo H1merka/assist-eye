@@ -26,13 +26,14 @@ export interface Command {
  * Русский + английский.
  */
 const COMMAND_PATTERNS: ReadonlyArray<[CommandType, RegExp]> = [
-  [CommandType.Stop, /\b(стоп|stop|хватит|enough)\b/i],
-  [CommandType.Read, /\b(прочитай|прочти|читай|read|text)\b/i],
-  [CommandType.Describe, /\b(опиши|что это|что вижу|describe|what is|what's this)\b/i],
-  [CommandType.Banknote, /\b(купюра|деньги|банкнот|banknote|money|bill)\b/i],
-  [CommandType.Navigate, /\b(маршрут|навигация|веди|navigate|route)\b/i],
-  [CommandType.Help, /\b(помощь|помоги|help)\b/i],
-  [CommandType.Repeat, /\b(повтори|repeat|ещё раз|again)\b/i],
+  // NOTE: JS \b плохо работает с кириллицей, поэтому используем простой contains-match.
+  [CommandType.Stop, /(стоп|stop|хватит|enough)/i],
+  [CommandType.Read, /(прочитай|прочти|читай|read|text)/i],
+  [CommandType.Describe, /(опиши|что это|что вижу|describe|what is|what's this)/i],
+  [CommandType.Banknote, /(купюра|деньги|банкнот|banknote|money|bill)/i],
+  [CommandType.Navigate, /(маршрут|навигация|веди|navigate|route)/i],
+  [CommandType.Help, /(помощь|помоги|help)/i],
+  [CommandType.Repeat, /(повтори|repeat|ещё раз|again)/i],
 ];
 
 /**
