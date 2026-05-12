@@ -22,6 +22,42 @@ jest.mock('react-native-vision-camera', () => ({
   }),
 }));
 
+// Мок для @react-native-community/netinfo
+jest.mock('@react-native-community/netinfo', () => ({
+  fetch: jest.fn().mockResolvedValue({
+    isConnected: true,
+    isInternetReachable: true,
+  }),
+}));
+
+// Мок для react-native-geolocation-service
+jest.mock('react-native-geolocation-service', () => ({
+  getCurrentPosition: jest.fn((success) =>
+    success({
+      coords: {latitude: 55.75, longitude: 37.62},
+    })
+  ),
+}));
+
+// Мок для react-native-permissions
+jest.mock('react-native-permissions', () => ({
+  check: jest.fn().mockResolvedValue('granted'),
+  request: jest.fn().mockResolvedValue('granted'),
+  PERMISSIONS: {
+    ANDROID: {
+      ACCESS_FINE_LOCATION: 'android.permission.ACCESS_FINE_LOCATION',
+      RECORD_AUDIO: 'android.permission.RECORD_AUDIO',
+    },
+    IOS: {
+      LOCATION_WHEN_IN_USE: 'ios.permission.LOCATION_WHEN_IN_USE',
+      MICROPHONE: 'ios.permission.MICROPHONE',
+    },
+  },
+  RESULTS: {
+    GRANTED: 'granted',
+  },
+}));
+
 // Мок для react-native-haptic-feedback
 jest.mock('react-native-haptic-feedback', () => ({
   trigger: jest.fn(),

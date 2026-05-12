@@ -4,6 +4,7 @@ module.exports = {
   setupFilesAfterEnv: ['./jest.setup.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/$1',
     '^@core/(.*)$': '<rootDir>/src/core/$1',
     '^@features/(.*)$': '<rootDir>/src/features/$1',
     '^@ui/(.*)$': '<rootDir>/src/ui/$1',

@@ -24,8 +24,8 @@ export interface SpatialNavigationService {
   getCurrentLocation(): Promise<Result<RouteLocation>>;
 
   /**
-   * Построить маршрут до точки интереса. 
-   * В будущем: запрос к Mapbox/OSM
+   * Построить маршрут до точки интереса.
+   * Используется API Яндекс Карт.
    */
   buildRoute(destination: string): Promise<Result<Route>>;
 

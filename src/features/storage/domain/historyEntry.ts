@@ -4,7 +4,7 @@
 
 export interface HistoryEntry {
   id?: number;
-  /** Тип операции: 'ocr' | 'detection' | 'banknote' */
+  /** Тип операции: 'ocr' | 'detection' | 'banknote' | 'navigation' | 'system' */
   type: string;
   /** Текстовый результат */
   resultText: string;

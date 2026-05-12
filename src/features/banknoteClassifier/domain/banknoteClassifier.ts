@@ -7,10 +7,10 @@ import {Result} from '@core/errors/result';
 export interface BanknoteClassifier {
   /**
    * Классифицировать купюру на изображении.
-   * @param imageUri — путь к файлу (уже обрезанный/ресайзнутый)
+  * @param imageInput — путь к файлу или готовый RGB-тензор
    * @returns название купюры (напр. «500 рублей») или Failure
    */
-  classify(imageUri: string): Promise<Result<string>>;
+  classify(imageInput: string | Uint8Array): Promise<Result<string>>;
 
   /** Загрузить модель */
   initialize(): Promise<Result<void>>;

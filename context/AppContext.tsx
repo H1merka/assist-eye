@@ -1,8 +1,10 @@
-// ...existing code...
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useCommandProcessor } from '@features/commandProcessor/store/commandStore';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-// ...existing code...
+import { useCommandProcessor } from '@features/commandProcessor/store/commandStore';
+import { historyRepository, settingsRepository } from '@features/storage/data/databaseHelper';
+import { ttsService } from '@features/tts/data/reactNativeTtsService';
+import { setYandexApiKey as setYandexApiKeyRuntime } from '@features/spatialNavigation/data/yandexSpatialNavigationService';
+import { TTS_RATE_DEFAULT, TTS_RATE_MAX, TTS_RATE_MIN } from '@core/constants/appConstants';
 
 export type Language = 'EN' | 'RU';
 export type AppStatus = 'idle' | 'listening' | 'processing' | 'ready';
@@ -11,81 +13,8 @@ export interface HistoryItem {
   id: string;
   result: string;
   timestamp: number;
+  type: string;
 }
-
-export const LABELS: Record<Language, Record<string, string>> = {
-  EN: {
-    start: 'Start',
-    startHint: 'Opens camera assistant',
-    stop: 'Stop',
-    stopHint: 'Stops voice input',
-    statusIdle: 'Ready. Press Start to open camera.',
-    statusListening: 'Listening...',
-    statusProcessing: 'Processing...',
-    statusReady: 'Result ready',
-    settingsTitle: 'Settings',
-    language: 'Language',
-    speechSpeed: 'Speech Speed',
-    vibration: 'Vibration Feedback',
-    mainTitle: 'AssistEye',
-    mainSubtitle: 'Voice Assistant',
-    tabMain: 'Main',
-    tabSettings: 'Settings',
-    slowLabel: 'Slow',
-    fastLabel: 'Fast',
-    on: 'On',
-    off: 'Off',
-    history: 'History',
-    historyEmpty: 'History is empty',
-    clearHistory: 'Clear history',
-    confirm: 'Confirm',
-    cancel: 'Cancel',
-    confirmClear: 'Are you sure you want to clear all history?',
-    volume: 'Volume',
-    tryAgain: 'Try again',
-    error: 'Error',
-    tabHistory: 'History',
-    cameraPrompt: 'Point camera at object',
-    capture: 'Capture',
-    processingCamera: 'Processing...',
-    detectedPrefix: 'Detected',
-    repeat: 'Repeat',
-    close: 'Close',
-    requestCameraPermission: 'Allow Camera Access',
-    cameraPermissionRequired: 'Camera permission is required to continue.',
-  },
-  RU: {
-    start: 'Старт',
-    startHint: 'Активирует голосовой ввод',
-    stop: 'Стоп',
-    stopHint: 'Останавливает голосовой ввод',
-    statusIdle: 'Готово. Нажмите Старт.',
-    statusListening: 'Слушаю...',
-    statusProcessing: 'Обработка...',
-    statusReady: 'Результат готов',
-    settingsTitle: 'Настройки',
-    language: 'Язык',
-    speechSpeed: 'Скорость речи',
-    vibration: 'Вибрация',
-    mainTitle: 'AssistEye',
-    mainSubtitle: 'Голосовой помощник',
-    tabMain: 'Главная',
-    tabSettings: 'Настройки',
-    slowLabel: 'Медленно',
-    fastLabel: 'Быстро',
-    on: 'Вкл',
-    off: 'Выкл',
-    history: 'История',
-    historyEmpty: 'История пуста',
-    clearHistory: 'Очистить историю',
-    confirm: 'Подтвердить',
-    cancel: 'Отмена',
-    confirmClear: 'Вы уверены, что хотите очистить всю историю?',
-    volume: 'Громкость',
-    tryAgain: 'Попробовать снова',
-    error: 'Ошибка',
-  },
-};
 
 interface AppContextType {
   language: Language;
@@ -99,49 +28,152 @@ interface AppContextType {
   status: AppStatus;
   setStatus: (status: AppStatus) => void;
   history: HistoryItem[];
-  addToHistory: (result: string) => void;
   clearHistory: () => void;
+  yandexApiKey: string;
+  setYandexApiKey: (key: string) => void;
   t: (key: string) => string;
 }
+
+const SETTINGS_KEYS = {
+  language: 'language',
+  speechRate: 'tts_rate',
+  vibration: 'vibration',
+  volume: 'tts_volume',
+  yandexApiKey: 'yandex_api_key',
+} as const;
 
 const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { t, i18n } = useTranslation();
   const processorState = useCommandProcessor((s) => s.state);
-  const errorMessage = useCommandProcessor((s) => s.errorMessage);
   const lastResult = useCommandProcessor((s) => s.lastResult);
+  const lastResultType = useCommandProcessor((s) => s.lastResultType);
+  const lastResultAt = useCommandProcessor((s) => s.lastResultAt);
 
-  // Сбрасываем старый локальный стейт, привязываемся к store
   const language = (i18n.language === 'en' ? 'EN' : 'RU') as Language;
-  const setLanguage = (lang: Language) => i18n.changeLanguage(lang.toLowerCase());
-  const [speechSpeed, setSpeechSpeed] = useState<number>(1.0);
-  const [vibrationEnabled, setVibrationEnabled] = useState<boolean>(true);
-  const [volume, setVolume] = useState<number>(0.8);
+  const [speechSpeed, setSpeechSpeedState] = useState<number>(TTS_RATE_DEFAULT);
+  const [vibrationEnabled, setVibrationEnabledState] = useState<boolean>(true);
+  const [volume, setVolumeState] = useState<number>(0.8);
   const [status, setStatus] = useState<AppStatus>('idle');
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [yandexApiKey, setYandexApiKeyState] = useState<string>('');
 
   useEffect(() => {
-    // Синхронизация статуса Zustand -> локальный UI-статус (временно, пока весь UI не перейдет на Zustand напрямую)
+    const loadSettings = async () => {
+      const savedLanguage = await settingsRepository.getString(SETTINGS_KEYS.language);
+      if (savedLanguage) {
+        await i18n.changeLanguage(savedLanguage);
+      }
+
+      const savedRate = await settingsRepository.getNumber(SETTINGS_KEYS.speechRate);
+      if (typeof savedRate === 'number') {
+        const clamped = Math.min(Math.max(savedRate, TTS_RATE_MIN), TTS_RATE_MAX);
+        setSpeechSpeedState(clamped);
+        await ttsService.setRate(clamped);
+      }
+
+      const savedVolume = await settingsRepository.getNumber(SETTINGS_KEYS.volume);
+      if (typeof savedVolume === 'number') {
+        setVolumeState(savedVolume);
+        await ttsService.setVolume(savedVolume);
+      }
+
+      const savedVibration = await settingsRepository.getBool(SETTINGS_KEYS.vibration);
+      if (typeof savedVibration === 'boolean') {
+        setVibrationEnabledState(savedVibration);
+      }
+
+      const savedKey = await settingsRepository.getString(SETTINGS_KEYS.yandexApiKey);
+      if (savedKey) {
+        setYandexApiKeyState(savedKey);
+        setYandexApiKeyRuntime(savedKey);
+      }
+    };
+
+    const loadHistory = async () => {
+      const entries = await historyRepository.getAllEntries();
+      const mapped = entries.map((entry) => ({
+        id: String(entry.id ?? `${entry.createdAt}-${entry.type}`),
+        result: entry.resultText,
+        timestamp: Date.parse(entry.createdAt),
+        type: entry.type,
+      }));
+      setHistory(mapped);
+    };
+
+    void loadSettings();
+    void loadHistory();
+  }, [i18n]);
+
+  useEffect(() => {
     if (processorState === 'processing') setStatus('processing');
-    else if (processorState === 'error') setStatus('idle'); // or 'error' if handled
+    else if (processorState === 'error') setStatus('idle');
     else if (processorState === 'success') setStatus('ready');
     else if (processorState === 'listening') setStatus('listening');
     else setStatus('idle');
   }, [processorState]);
 
-  const addToHistory = (result: string) => {
-    const item: HistoryItem = {
-      id: Date.now().toString(),
-      result,
-      timestamp: Date.now(),
+  useEffect(() => {
+    const addEntry = async () => {
+      if (!lastResult || !lastResultType || !lastResultAt) return;
+      const createdAt = new Date(lastResultAt).toISOString();
+      await historyRepository.addEntry({
+        type: lastResultType,
+        resultText: lastResult,
+        createdAt,
+      });
+      setHistory((prev) => [
+        {
+          id: String(lastResultAt),
+          result: lastResult,
+          timestamp: lastResultAt,
+          type: lastResultType,
+        },
+        ...prev,
+      ]);
     };
-    setHistory((prev) => [item, ...prev]);
-  ];
+
+    void addEntry();
+  }, [lastResultAt, lastResult, lastResultType]);
+
+  const setLanguage = (lang: Language) => {
+    const next = lang.toLowerCase();
+    i18n.changeLanguage(next);
+    settingsRepository.setString(SETTINGS_KEYS.language, next);
+    const ttsLang = next === 'en' ? 'en-US' : 'ru-RU';
+    ttsService.setLanguage(ttsLang);
+  };
+
+  const setSpeechSpeed = (speed: number) => {
+    const clamped = Math.min(Math.max(speed, TTS_RATE_MIN), TTS_RATE_MAX);
+    setSpeechSpeedState(clamped);
+    settingsRepository.setNumber(SETTINGS_KEYS.speechRate, clamped);
+    ttsService.setRate(clamped);
+  };
+
+  const setVibrationEnabled = (enabled: boolean) => {
+    setVibrationEnabledState(enabled);
+    settingsRepository.setBool(SETTINGS_KEYS.vibration, enabled);
+  };
+
+  const setVolume = (vol: number) => {
+    const clamped = Math.min(Math.max(vol, 0), 1);
+    setVolumeState(clamped);
+    settingsRepository.setNumber(SETTINGS_KEYS.volume, clamped);
+    ttsService.setVolume(clamped);
+  };
+
+  const setYandexApiKey = (key: string) => {
+    const normalized = key.trim();
+    setYandexApiKeyState(normalized);
+    settingsRepository.setString(SETTINGS_KEYS.yandexApiKey, normalized);
+    setYandexApiKeyRuntime(normalized);
   };
 
   const clearHistory = () => {
     setHistory([]);
+    historyRepository.clearHistory();
   };
 
   return (
@@ -158,8 +190,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         status,
         setStatus,
         history,
-        addToHistory,
         clearHistory,
+        yandexApiKey,
+        setYandexApiKey,
         t,
       }}
     >

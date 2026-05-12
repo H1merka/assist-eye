@@ -36,10 +36,10 @@ export const PROCESSING_FEEDBACK_DELAY_MS = 1_500;
 
 // ---------- Image sizes ----------
 
-/** Входной размер SSD MobileNet v2 */
-export const SSD_INPUT_SIZE = 300;
+/** Входной размер YOLO11n (проверьте соответствие модели) */
+export const YOLO_INPUT_SIZE = 640;
 
-/** Входной размер MobileNet v3-Small (купюры) */
+/** Входной размер EfficientNetB0 (купюры) */
 export const BANKNOTE_INPUT_SIZE = 224;
 
 /** Максимальное разрешение захвата камеры */

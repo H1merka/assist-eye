@@ -1,5 +1,6 @@
 import {LOG_MAX_FILE_SIZE_BYTES, LOG_MAX_FILES} from '@core/constants/appConstants';
 import * as RNFS from 'react-native-fs';
+import {sanitizeForLogging, LOG_RETENTION_DAYS} from './privacyUtils';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -76,7 +77,13 @@ async function rotateLogs(): Promise<void> {
 }
 
 async function writeLog(entry: LogEntry): Promise<void> {
-  const stringified = JSON.stringify(entry);
+  // Sanitize details for privacy
+  const sanitizedEntry: LogEntry = {
+    ...entry,
+    details: entry.details ? sanitizeForLogging(entry.details) : undefined,
+  };
+
+  const stringified = JSON.stringify(sanitizedEntry);
   logQueue.push(stringified + '\n');
   
   if (__DEV__) {
@@ -96,6 +103,24 @@ async function writeLog(entry: LogEntry): Promise<void> {
   processLogQueue();
 }
 
+async function cleanupOldLogs(): Promise<void> {
+  try {
+    const cutoffTime = Date.now() - LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+    for (let i = 1; i <= LOG_MAX_FILES; i++) {
+      const logPath = i === 1 ? LOG_FILE_PATH : `${LOG_FILE_PATH}.${i - 1}`;
+      if (await RNFS.exists(logPath)) {
+        const stats = await RNFS.stat(logPath);
+        const modifiedTime = Math.floor(new Date(stats.mtime!).getTime());
+        if (modifiedTime < cutoffTime) {
+          await RNFS.unlink(logPath);
+        }
+      }
+    }
+  } catch (error) {
+    if (__DEV__) console.error('[Logger] Cleanup failed:', error);
+  }
+}
+
 export const Logger = {
   debug: (component: string, message: string, details?: unknown): void => {
     void writeLog(formatEntry('debug', component, message, details));
@@ -112,4 +137,10 @@ export const Logger = {
   error: (component: string, message: string, details?: unknown): void => {
     void writeLog(formatEntry('error', component, message, details));
   },
+
+  /**
+   * Manually trigger cleanup of old logs.
+   * (Auto-cleanup could be added to AppContext on app startup.)
+   */
+  cleanupOldLogs: (): Promise<void> => cleanupOldLogs(),
 } as const;

@@ -8,10 +8,10 @@ import {DetectionResult} from './detectionResult';
 export interface ObjectDetector {
   /**
    * Запустить детекцию на изображении.
-   * @param imageUri — путь к файлу
+  * @param imageInput — путь к файлу или готовый RGB-тензор
    * @returns список обнаруженных объектов (уже после NMS и фильтрации)
    */
-  detect(imageUri: string): Promise<Result<DetectionResult[]>>;
+  detect(imageInput: string | Uint8Array): Promise<Result<DetectionResult[]>>;
 
   /** Загрузить модель в память (lazy init) */
   initialize(): Promise<Result<void>>;

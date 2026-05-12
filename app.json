@@ -1,15 +1,4 @@
 {
-  "expo": {
-    "android": {
-      "package": "com.anonymous.assisteye"
-    },
-    "plugins": [
-      [
-        "expo-location",
-        {
-          "locationAlwaysAndWhenInUsePermission": "Приложению необходим доступ к геолокации для работы встроенной пошаговой навигации."
-        }
-      ]
-    ]
-  }
+  "name": "AssistEye",
+  "displayName": "AssistEye"
 }

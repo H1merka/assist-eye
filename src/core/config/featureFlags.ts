@@ -11,7 +11,7 @@
 
 export const FeatureFlags = {
   /** Классификатор денежных купюр (Should-have) */
-  banknoteClassifier: __DEV__ ? false : false,
+  banknoteClassifier: true,
 
   /** Голосовой онбординг при первом запуске (Should-have) */
   onboarding: false,

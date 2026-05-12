@@ -18,12 +18,33 @@
   "settings": {
     "screenLabel": "Экран настроек",
     "language": "Язык",
+    "languageHint": "Сменить язык интерфейса",
     "voice": "Голос",
     "speechRate": "Скорость речи",
+    "speechRateDown": "Уменьшить скорость речи",
+    "speechRateUp": "Увеличить скорость речи",
+    "vibration": "Вибрация",
+    "vibrationHint": "Включить или выключить виброотклик",
+    "yandexKey": "API-ключ Яндекс Карт",
+    "yandexKeyPlaceholder": "Введите ключ",
+    "yandexKeyHint": "Используется для построения маршрутов",
     "clearHistory": "Очистить историю",
     "clearHistoryA11y": "Очистить всю историю распознаваний",
     "clearHistoryHint": "Удаляет все сохранённые результаты",
     "historyCleared": "История очищена"
+  },
+  "tabs": {
+    "main": "Главная",
+    "history": "История",
+    "settings": "Настройки"
+  },
+  "common": {
+    "confirm": "Подтвердить",
+    "cancel": "Отмена",
+    "slow": "Медленно",
+    "fast": "Быстро",
+    "on": "Вкл",
+    "off": "Выкл"
   },
   "history": {
     "screenLabel": "История распознаваний",

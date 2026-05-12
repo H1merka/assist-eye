@@ -18,12 +18,33 @@
   "settings": {
     "screenLabel": "Settings screen",
     "language": "Language",
+    "languageHint": "Switch app language",
     "voice": "Voice",
     "speechRate": "Speech rate",
+    "speechRateDown": "Decrease speech rate",
+    "speechRateUp": "Increase speech rate",
+    "vibration": "Vibration",
+    "vibrationHint": "Toggle vibration feedback",
+    "yandexKey": "Yandex Maps API key",
+    "yandexKeyPlaceholder": "Enter key",
+    "yandexKeyHint": "Used to build routes",
     "clearHistory": "Clear history",
     "clearHistoryA11y": "Clear all recognition history",
     "clearHistoryHint": "Deletes all saved results",
     "historyCleared": "History cleared"
+  },
+  "tabs": {
+    "main": "Main",
+    "history": "History",
+    "settings": "Settings"
+  },
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "slow": "Slow",
+    "fast": "Fast",
+    "on": "On",
+    "off": "Off"
   },
   "history": {
     "screenLabel": "Recognition history",
