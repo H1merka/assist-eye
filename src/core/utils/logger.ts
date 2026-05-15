@@ -1,6 +1,6 @@
-import {LOG_MAX_FILE_SIZE_BYTES, LOG_MAX_FILES} from '@core/constants/appConstants';
+import { LOG_MAX_FILE_SIZE_BYTES, LOG_MAX_FILES } from '@core/constants/appConstants';
 import * as RNFS from 'react-native-fs';
-import {sanitizeForLogging, LOG_RETENTION_DAYS} from './privacyUtils';
+import { sanitizeForLogging, LOG_RETENTION_DAYS } from './privacyUtils';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -33,13 +33,15 @@ function formatEntry(
 }
 
 async function processLogQueue(): Promise<void> {
-  if (isWriting || logQueue.length === 0) return;
+  if (isWriting || logQueue.length === 0) {
+    return;
+  }
   isWriting = true;
 
   try {
     const logsToWrite = logQueue.join('');
     logQueue = [];
-    
+
     const fileExists = await RNFS.exists(LOG_FILE_PATH);
     if (fileExists) {
       const stats = await RNFS.stat(LOG_FILE_PATH);
@@ -50,7 +52,9 @@ async function processLogQueue(): Promise<void> {
 
     await RNFS.appendFile(LOG_FILE_PATH, logsToWrite, 'utf8');
   } catch (error) {
-    if (__DEV__) console.error('[Logger] Queue processing failed:', error);
+    if (__DEV__) {
+      console.error('[Logger] Queue processing failed:', error);
+    }
   } finally {
     isWriting = false;
     if (logQueue.length > 0) {
@@ -72,7 +76,9 @@ async function rotateLogs(): Promise<void> {
       }
     }
   } catch (error) {
-    if (__DEV__) console.error('[Logger] Rotation failed:', error);
+    if (__DEV__) {
+      console.error('[Logger] Rotation failed:', error);
+    }
   }
 }
 
@@ -85,18 +91,18 @@ async function writeLog(entry: LogEntry): Promise<void> {
 
   const stringified = JSON.stringify(sanitizedEntry);
   logQueue.push(stringified + '\n');
-  
+
   if (__DEV__) {
     const prefix = `[${entry.level.toUpperCase()}][${entry.component}]`;
     switch (entry.level) {
-      case 'error':
-        console.error(prefix, entry.message, entry.details ?? '');
-        break;
-      case 'warn':
-        console.warn(prefix, entry.message, entry.details ?? '');
-        break;
-      default:
-        console.log(prefix, entry.message, entry.details ?? '');
+    case 'error':
+      console.error(prefix, entry.message, entry.details ?? '');
+      break;
+    case 'warn':
+      console.warn(prefix, entry.message, entry.details ?? '');
+      break;
+    default:
+      console.log(prefix, entry.message, entry.details ?? '');
     }
   }
 
@@ -117,7 +123,9 @@ async function cleanupOldLogs(): Promise<void> {
       }
     }
   } catch (error) {
-    if (__DEV__) console.error('[Logger] Cleanup failed:', error);
+    if (__DEV__) {
+      console.error('[Logger] Cleanup failed:', error);
+    }
   }
 }
 

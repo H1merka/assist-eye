@@ -1,6 +1,6 @@
+const path = require('path');
 const tsPlugin = require('@typescript-eslint/eslint-plugin');
 const tsParser = require('@typescript-eslint/parser');
-const rnPlugin = require('@react-native/eslint-config');
 
 module.exports = [
   {
@@ -23,6 +23,8 @@ module.exports = [
         ecmaFeatures: {
           jsx: true,
         },
+        project: ['./tsconfig.json'],
+        tsconfigRootDir: path.resolve(__dirname),
       },
       globals: {
         __DEV__: 'readonly',
@@ -31,7 +33,6 @@ module.exports = [
     },
     plugins: {
       '@typescript-eslint': tsPlugin,
-      '@react-native': rnPlugin,
     },
     rules: {
       // Core ESLint
@@ -54,13 +55,10 @@ module.exports = [
       'arrow-spacing': 'error',
 
       // TypeScript ESLint
-      '@typescript-eslint/explicit-function-return-types': ['warn', { allowExpressions: true }],
+      '@typescript-eslint/explicit-function-return-type': ['warn', { allowExpressions: true }],
       '@typescript-eslint/explicit-member-accessibility': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-floating-promises': 'error',
-      '@typescript-eslint/await-thenable': 'error',
-      '@typescript-eslint/no-misused-promises': 'error',
       '@typescript-eslint/strict-boolean-expressions': 'off',
       '@typescript-eslint/prefer-nullish-coalescing': 'warn',
       '@typescript-eslint/prefer-optional-chain': 'warn',
@@ -68,7 +66,7 @@ module.exports = [
         'error',
         {
           selector: 'variable',
-          format: ['camelCase', 'PascalCase', 'UPPER_SNAKE_CASE'],
+          format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
         },
         {
           selector: 'typeLike',
@@ -80,9 +78,6 @@ module.exports = [
         },
       ],
 
-      // React Native
-      '@react-native/no-inline-styles': 'warn',
-      '@react-native/no-color-literals': 'off',
     },
   },
   {

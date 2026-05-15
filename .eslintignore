@@ -1,7 +1,0 @@
-# Ignore non-source app files and build artifacts
-app/
-android/
-ios/
-node_modules/
-venv/
-**/*.d.ts

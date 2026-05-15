@@ -1,4 +1,4 @@
-import {FeatureFlags, isFeatureEnabled} from './featureFlags';
+import { FeatureFlags, isFeatureEnabled } from './featureFlags';
 
 describe('FeatureFlags', () => {
   it('returns the exact configured value for each key', () => {

@@ -13,7 +13,9 @@ export default function convertFrameToTensor(frame: any, width: number, height: 
 
   // Output is Uint8Array of length width*height*3 (RGB).
   const out = new Uint8Array(width * height * 3);
-  if (!srcW || !srcH) return out;
+  if (!srcW || !srcH) {
+    return out;
+  }
 
   try {
     let bytes: Uint8Array | null = null;
@@ -24,11 +26,15 @@ export default function convertFrameToTensor(frame: any, width: number, height: 
       bytes = frame.bytes || frame.data;
     }
 
-    if (!bytes) return out;
+    if (!bytes) {
+      return out;
+    }
 
     const pixelCount = srcW * srcH;
     const bytesPerPixel = Math.floor(bytes.length / pixelCount);
-    if (bytesPerPixel < 3) return out;
+    if (bytesPerPixel < 3) {
+      return out;
+    }
 
     const targetRatio = width / height;
     let cropW = srcW;
@@ -53,7 +59,7 @@ export default function convertFrameToTensor(frame: any, width: number, height: 
         out[dstIdx + 2] = bytes[srcIdx + 2];
       }
     }
-  } catch (e) {
+  } catch {
     // Worklets don't support console in some environments; swallow errors.
   }
 

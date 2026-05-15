@@ -24,12 +24,12 @@ export {
   MIN_TOUCH_TARGET,
 } from './constants/appConstants';
 
-export {FeatureFlags, isFeatureEnabled} from './config/featureFlags';
-export type {FeatureFlagKey} from './config/featureFlags';
+export { FeatureFlags, isFeatureEnabled } from './config/featureFlags';
+export type { FeatureFlagKey } from './config/featureFlags';
 
-export {success, failure} from './errors/result';
-export type {Result, Success, Failure} from './errors/result';
+export { success, failure } from './errors/result';
+export type { Result, Success, Failure } from './errors/result';
 
 export * from './errors/errorCodes';
 
-export {Logger} from './utils/logger';
+export { Logger } from './utils/logger';

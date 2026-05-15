@@ -6,7 +6,7 @@
  * recognition loop выполняется на native thread — UI не блокируется.
  */
 
-import {Result} from '@core/errors/result';
+import { Result } from '@core/errors/result';
 
 export interface SpeechRecognizer {
   /** Инициализация модели (загрузка в память, не в UI-потоке) */

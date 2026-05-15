@@ -1,12 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-  PermissionsAndroid,
-  Platform,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { PermissionsAndroid, Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { useApp } from '@/context/AppContext';
 import MainButton from '@/components/MainButton';
 import StatusFeedback from '@/components/StatusFeedback';
@@ -17,35 +10,37 @@ import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
 async function ensureMicPermission(): Promise<boolean> {
   if (Platform.OS === 'android') {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.RECORD_AUDIO
-    );
+    const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
     return granted === PermissionsAndroid.RESULTS.GRANTED;
   }
 
   const status = await check(PERMISSIONS.IOS.MICROPHONE);
-  if (status === RESULTS.GRANTED) return true;
+  if (status === RESULTS.GRANTED) {
+    return true;
+  }
   const next = await request(PERMISSIONS.IOS.MICROPHONE);
   return next === RESULTS.GRANTED;
 }
 
 export default function MainScreen() {
   const { status, setStatus, t, language } = useApp();
-  const processVoiceInput = useCommandProcessor((state) => state.processVoiceInput);
+  const processVoiceInput = useCommandProcessor(state => state.processVoiceInput);
 
   useEffect(() => {
     let isActive = true;
 
     const initVosk = async () => {
       const ok = await ensureMicPermission();
-      if (!ok || !isActive) return;
+      if (!ok || !isActive) {
+        return;
+      }
       const lang = language === 'EN' ? 'en' : 'ru';
       await speechRecognizer.initialize(lang);
     };
 
     initVosk();
 
-    speechRecognizer.onResult((text) => {
+    speechRecognizer.onResult(text => {
       setStatus('processing');
       processVoiceInput(text);
     });
@@ -62,14 +57,14 @@ export default function MainScreen() {
 
   const statusMessage = (() => {
     switch (status) {
-      case 'idle':
-        return t('status.ready');
-      case 'listening':
-        return t('status.listening');
-      case 'processing':
-        return t('status.processing');
-      case 'ready':
-        return t('status.ready');
+    case 'idle':
+      return t('status.ready');
+    case 'listening':
+      return t('status.listening');
+    case 'processing':
+      return t('status.processing');
+    case 'ready':
+      return t('status.ready');
     }
   })();
 

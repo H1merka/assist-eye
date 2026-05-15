@@ -14,12 +14,23 @@ export default function App() {
     let mounted = true;
 
     const init = async () => {
-      await initI18n();
-      await initDatabase();
-      if (mounted) setReady(true);
+      const results = await Promise.allSettled([initI18n(), initDatabase()]);
+
+      const rejected = results.filter(result => result.status === 'rejected');
+      if (rejected.length > 0) {
+        rejected.forEach(result => {
+          if (result.status === 'rejected') {
+            console.error('[App] Startup initialization failed:', result.reason);
+          }
+        });
+      }
+
+      if (mounted) {
+        setReady(true);
+      }
     };
 
-    init();
+    void init();
 
     return () => {
       mounted = false;

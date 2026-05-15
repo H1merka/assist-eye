@@ -1,4 +1,4 @@
-import {failure, success} from './result';
+import { failure, success } from './result';
 
 describe('Result factories', () => {
   it('creates success result', () => {

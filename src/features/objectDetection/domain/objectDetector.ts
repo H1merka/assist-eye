@@ -2,13 +2,13 @@
  * Абстрактный интерфейс детектора объектов.
  */
 
-import {Result} from '@core/errors/result';
-import {DetectionResult} from './detectionResult';
+import { Result } from '@core/errors/result';
+import { DetectionResult } from './detectionResult';
 
 export interface ObjectDetector {
   /**
    * Запустить детекцию на изображении.
-  * @param imageInput — путь к файлу или готовый RGB-тензор
+   * @param imageInput — путь к файлу или готовый RGB-тензор
    * @returns список обнаруженных объектов (уже после NMS и фильтрации)
    */
   detect(imageInput: string | Uint8Array): Promise<Result<DetectionResult[]>>;

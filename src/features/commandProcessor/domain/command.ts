@@ -45,9 +45,9 @@ export function parseCommand(text: string): Command {
 
   for (const [type, pattern] of COMMAND_PATTERNS) {
     if (pattern.test(normalized)) {
-      return {type, rawText: text};
+      return { type, rawText: text };
     }
   }
 
-  return {type: CommandType.Unknown, rawText: text};
+  return { type: CommandType.Unknown, rawText: text };
 }

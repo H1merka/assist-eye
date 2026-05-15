@@ -11,7 +11,11 @@ export default function HistoryScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
-        <Text style={styles.title} accessibilityRole="header" accessibilityLabel={t('history.screenLabel')}>
+        <Text
+          style={styles.title}
+          accessibilityRole="header"
+          accessibilityLabel={t('history.screenLabel')}
+        >
           {t('history.screenLabel')}
         </Text>
 
@@ -20,10 +24,8 @@ export default function HistoryScreen() {
         ) : (
           <FlatList
             data={history}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <HistoryItem result={item.result} timestamp={item.timestamp} />
-            )}
+            keyExtractor={item => item.id}
+            renderItem={({ item }) => <HistoryItem result={item.result} timestamp={item.timestamp} />}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
           />

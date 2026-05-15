@@ -1,6 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Camera, useCameraDevice, useCameraPermission, useFrameProcessor } from 'react-native-vision-camera';
+import {
+  Camera,
+  useCameraDevice,
+  useCameraPermission,
+  useFrameProcessor,
+} from 'react-native-vision-camera';
 import { useRunOnJS, useSharedValue } from 'react-native-worklets-core';
 import convertFrameToTensor from '@features/objectDetection/frameProcessor/convertFrameToTensor.worklet';
 import {
@@ -30,29 +35,33 @@ export function CameraHost() {
         reject: (error: Error) => void;
         timeoutId: ReturnType<typeof setTimeout>;
       }
-    >()
+    >(),
   );
   const tensorRequest = useSharedValue<FrameTensorRequest | null>(null);
 
   const handleFrameTensor = useRunOnJS((tensor: Uint8Array, requestId: number) => {
     const pending = pendingRequests.current.get(requestId);
-    if (!pending) return;
+    if (!pending) {
+      return;
+    }
     clearTimeout(pending.timeoutId);
     pending.resolve(tensor);
     pendingRequests.current.delete(requestId);
   }, []);
 
   const frameProcessor = useFrameProcessor(
-    (frame) => {
+    frame => {
       'worklet';
       const request = tensorRequest.value;
-      if (!request) return;
+      if (!request) {
+        return;
+      }
       tensorRequest.value = null;
 
       const tensor = convertFrameToTensor(frame, request.width, request.height);
       handleFrameTensor(tensor, request.id);
     },
-    [handleFrameTensor]
+    [handleFrameTensor],
   );
 
   useEffect(() => {
@@ -93,7 +102,9 @@ export function CameraHost() {
     }
   }, [isActive]);
 
-  if (!device) return null;
+  if (!device) {
+    return null;
+  }
 
   return (
     <View pointerEvents="none" style={styles.container}>

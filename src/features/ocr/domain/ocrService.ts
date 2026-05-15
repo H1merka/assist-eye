@@ -2,7 +2,7 @@
  * Абстрактный интерфейс OCR-сервиса.
  */
 
-import {Result} from '@core/errors/result';
+import { Result } from '@core/errors/result';
 
 export interface OcrService {
   /**

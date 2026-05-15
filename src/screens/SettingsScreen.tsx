@@ -12,7 +12,6 @@ import {
   AccessibilityRole,
 } from 'react-native';
 import { useApp, Language } from '@/context/AppContext';
-import { isFeatureEnabled } from '@core/config/featureFlags';
 import { COLORS } from '@/constants/Colors';
 
 const SPEED_STEPS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
@@ -82,7 +81,7 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>{t('settings.language')}</Text>
           <View style={styles.languageRow}>
-            {(['EN', 'RU'] as Language[]).map((lang) => (
+            {(['EN', 'RU'] as Language[]).map(lang => (
               <TouchableOpacity
                 key={lang}
                 onPress={() => setLanguage(lang)}
@@ -90,16 +89,10 @@ export default function SettingsScreen() {
                 accessibilityHint={t('settings.languageHint')}
                 accessibilityRole={'button' as AccessibilityRole}
                 accessibilityState={{ selected: language === lang }}
-                style={[
-                  styles.langButton,
-                  language === lang && styles.langButtonActive,
-                ]}
+                style={[styles.langButton, language === lang && styles.langButtonActive]}
               >
                 <Text
-                  style={[
-                    styles.langButtonText,
-                    language === lang && styles.langButtonTextActive,
-                  ]}
+                  style={[styles.langButtonText, language === lang && styles.langButtonTextActive]}
                 >
                   {lang}
                 </Text>
@@ -122,10 +115,7 @@ export default function SettingsScreen() {
               accessibilityHint={t('settings.speechRateDown')}
               accessibilityRole={'button' as AccessibilityRole}
               accessibilityState={{ disabled: currentSpeedIndex === 0 }}
-              style={[
-                styles.speedButton,
-                currentSpeedIndex === 0 && styles.speedButtonDisabled,
-              ]}
+              style={[styles.speedButton, currentSpeedIndex === 0 && styles.speedButtonDisabled]}
             >
               <Text style={styles.speedButtonText}>-</Text>
             </TouchableOpacity>

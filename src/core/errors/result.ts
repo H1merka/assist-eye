@@ -32,9 +32,9 @@ export interface Failure {
 
 /** Фабрики для удобного создания */
 export function success<T>(data: T): Success<T> {
-  return {ok: true, data};
+  return { ok: true, data };
 }
 
 export function failure(errorCode: string, userMessage: string): Failure {
-  return {ok: false, errorCode, userMessage};
+  return { ok: false, errorCode, userMessage };
 }

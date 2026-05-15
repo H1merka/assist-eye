@@ -5,7 +5,7 @@ describe('errorCodes', () => {
     const values = Object.values(codes);
 
     expect(values.length).toBeGreaterThan(0);
-    values.forEach((value) => {
+    values.forEach(value => {
       expect(typeof value).toBe('string');
       expect(value.length).toBeGreaterThan(0);
     });

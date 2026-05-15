@@ -3,7 +3,7 @@
  * Лимит: HISTORY_MAX_ENTRIES (50) записей.
  */
 
-import {HistoryEntry} from './historyEntry';
+import { HistoryEntry } from './historyEntry';
 
 export interface HistoryRepository {
   /** Добавить запись. Если превышен лимит — удалить самую старую. */

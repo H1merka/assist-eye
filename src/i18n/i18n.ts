@@ -7,15 +7,15 @@
  */
 
 import i18n from 'i18next';
-import {initReactI18next} from 'react-i18next';
+import { initReactI18next } from 'react-i18next';
 import * as RNLocalize from 'react-native-localize';
 
 import en from './locales/en.json';
 import ru from './locales/ru.json';
 
 const resources = {
-  en: {translation: en},
-  ru: {translation: ru},
+  en: { translation: en },
+  ru: { translation: ru },
 };
 
 export async function initI18n(): Promise<void> {

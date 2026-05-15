@@ -27,7 +27,7 @@ export async function getImageSize(uri: string): Promise<ImageSize> {
     Image.getSize(
       uri,
       (width, height) => resolve({ width, height }),
-      (error) => reject(error)
+      error => reject(error),
     );
   });
 }
@@ -44,11 +44,18 @@ export async function downscaleIfNeeded(uri: string): Promise<string> {
     }
 
     const isLandscape = size.width > size.height;
-    const newWidth = isLandscape ? IMAGE_MAX_DIMENSION : Math.round((size.width / size.height) * IMAGE_MAX_DIMENSION);
-    const newHeight = isLandscape ? Math.round((size.height / size.width) * IMAGE_MAX_DIMENSION) : IMAGE_MAX_DIMENSION;
+    const newWidth = isLandscape
+      ? IMAGE_MAX_DIMENSION
+      : Math.round((size.width / size.height) * IMAGE_MAX_DIMENSION);
+    const newHeight = isLandscape
+      ? Math.round((size.height / size.width) * IMAGE_MAX_DIMENSION)
+      : IMAGE_MAX_DIMENSION;
 
-    Logger.info('ImagePreprocessing', `Downscaling image from ${size.width}x${size.height} to ${newWidth}x${newHeight}`);
-    
+    Logger.info(
+      'ImagePreprocessing',
+      `Downscaling image from ${size.width}x${size.height} to ${newWidth}x${newHeight}`,
+    );
+
     // Resize with JPEG output, 85 quality
     const resizedImage = await ImageResizer.createResizedImage(
       uri,
@@ -56,12 +63,12 @@ export async function downscaleIfNeeded(uri: string): Promise<string> {
       newHeight,
       'JPEG',
       85,
-      0, 
-      undefined, 
-      false, 
-      { mode: 'contain', onlyScaleDown: true }
+      0,
+      undefined,
+      false,
+      { mode: 'contain', onlyScaleDown: true },
     );
-    
+
     return resizedImage.uri;
   } catch (error) {
     Logger.error('ImagePreprocessing', 'Failed to downscale image', error);
@@ -86,7 +93,7 @@ export async function cropCenterForBanknote(uri: string): Promise<string> {
     const size = await getImageSize(uri);
     const cropWidth = size.width * BANKNOTE_CROP_RATIO;
     const cropHeight = size.height * BANKNOTE_CROP_RATIO;
-    
+
     Logger.info('ImagePreprocessing', `Cropping center for banknote: ${cropWidth}x${cropHeight}`);
 
     const resizedImage = await ImageResizer.createResizedImage(
@@ -98,9 +105,9 @@ export async function cropCenterForBanknote(uri: string): Promise<string> {
       0,
       undefined,
       false,
-      { mode: 'cover' } 
+      { mode: 'cover' },
     );
-    
+
     return resizedImage.uri;
   } catch (error) {
     Logger.error('ImagePreprocessing', 'Failed to crop banknote center', error);
@@ -122,12 +129,12 @@ export async function resizeSquare(uri: string, size: number): Promise<string> {
       0,
       undefined,
       false,
-      { mode: 'stretch' }
+      { mode: 'stretch' },
     );
     return resizedImage.uri;
   } catch (error) {
-     Logger.error('ImagePreprocessing', 'Failed to square-resize image', error);
-     return uri;
+    Logger.error('ImagePreprocessing', 'Failed to square-resize image', error);
+    return uri;
   }
 }
 
@@ -143,7 +150,7 @@ export async function resizeSquare(uri: string, size: number): Promise<string> {
 export async function convertImageToRGBATensor(
   uri: string,
   width: number = YOLO_INPUT_SIZE,
-  height: number = YOLO_INPUT_SIZE
+  height: number = YOLO_INPUT_SIZE,
 ): Promise<Uint8Array> {
   try {
     await resizeSquare(uri, Math.max(width, height));
@@ -164,10 +171,10 @@ export async function convertImageToRGBATensor(
 export function convertFrameToRGBATensorFromWorklet(
   frame: any,
   width: number = YOLO_INPUT_SIZE,
-  height: number = YOLO_INPUT_SIZE
+  height: number = YOLO_INPUT_SIZE,
 ): Uint8Array {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const convertWorklet = require('@features/objectDetection/frameProcessor/convertFrameToTensor.worklet').default;
+  const convertWorklet =
+    require('@features/objectDetection/frameProcessor/convertFrameToTensor.worklet').default;
   if (typeof convertWorklet === 'function') {
     // run on worklet: convertWorklet(frame, width, height)
     // In practice this file will be executed on the worklet thread; here we just forward the call.

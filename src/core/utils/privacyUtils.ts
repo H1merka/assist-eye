@@ -1,6 +1,6 @@
 /**
  * Privacy utilities: PII filtering and data sanitization.
- * 
+ *
  * Ensures sensitive information is not stored in logs or exposed to analytics.
  * Rules:
  * - Filter email addresses, phone numbers, names
@@ -27,7 +27,7 @@ export function sanitizeForLogging(value: unknown): unknown {
   }
 
   if (Array.isArray(value)) {
-    return value.map((item) => sanitizeForLogging(item));
+    return value.map(item => sanitizeForLogging(item));
   }
 
   if (value && typeof value === 'object') {
@@ -69,8 +69,12 @@ export const HISTORY_RETENTION_MAX_ENTRIES = 50;
  * All processing is on-device; no data sent to cloud.
  */
 export const PRIVACY_POLICY = {
-  dataProcessing: 'All processing (OCR, object detection, banknote classification) is performed on the device.',
-  dataStorage: 'Recognition results are stored locally in SQLite. Search history is kept for 7 days and auto-deleted.',
-  dataSharing: 'No personal data is shared with third parties. Yandex Maps API calls include only your location (required for navigation).',
-  backup: 'App backup is disabled (android:allowBackup="false") to prevent data leakage through backup mechanisms.',
+  dataProcessing:
+    'All processing (OCR, object detection, banknote classification) is performed on the device.',
+  dataStorage:
+    'Recognition results are stored locally in SQLite. Search history is kept for 7 days and auto-deleted.',
+  dataSharing:
+    'No personal data is shared with third parties. Yandex Maps API calls include only your location (required for navigation).',
+  backup:
+    'App backup is disabled (android:allowBackup="false") to prevent data leakage through backup mechanisms.',
 };

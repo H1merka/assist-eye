@@ -1,4 +1,4 @@
-import {Result} from '@core/errors/result';
+import { Result } from '@core/errors/result';
 
 export interface RouteLocation {
   latitude: number;

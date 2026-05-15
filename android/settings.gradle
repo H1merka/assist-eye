@@ -1,5 +1,5 @@
 pluginManagement {
-  def reactNativeGradlePlugin = new File(
+  includeBuild(new File(
     providers.exec {
       workingDir(rootDir)
       commandLine(
@@ -8,8 +8,7 @@ pluginManagement {
         "require.resolve('@react-native/gradle-plugin/package.json', { paths: [require.resolve('react-native/package.json')] })"
       )
     }.standardOutput.asText.get().trim()
-  ).getParentFile().absolutePath
-  includeBuild(reactNativeGradlePlugin)
+  ).getParentFile().absolutePath)
 }
 
 plugins {
@@ -22,4 +21,13 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
 
 rootProject.name = 'assist-eye'
 include ':app'
-includeBuild(reactNativeGradlePlugin)
+includeBuild(new File(
+  providers.exec {
+    workingDir(rootDir)
+    commandLine(
+      "node",
+      "--print",
+      "require.resolve('@react-native/gradle-plugin/package.json', { paths: [require.resolve('react-native/package.json')] })"
+    )
+  }.standardOutput.asText.get().trim()
+).getParentFile().absolutePath)
