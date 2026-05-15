@@ -1,5 +1,6 @@
 import React from 'react';
-import { FlatList, Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Platform, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '@/context/AppContext';
 import { COLORS } from '@/constants/Colors';
 import HistoryItem from '@/components/HistoryItem';

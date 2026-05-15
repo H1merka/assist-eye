@@ -1,4 +1,27 @@
 {
-  "name": "AssistEye",
-  "displayName": "AssistEye"
+  "expo": {
+    "name": "Assist Eye",
+    "slug": "assist-eye",
+    "version": "0.1.0",
+    "scheme": "assist-eye",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "ios": {
+      "bundleIdentifier": "com.example.assisteye",
+      "buildNumber": "1.0.0"
+    },
+    "android": {
+      "package": "com.anonymous.assisteye"
+    },
+    "plugins": [
+      "./plugins/permissions-plugin"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
 }

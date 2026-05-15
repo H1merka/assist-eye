@@ -1,12 +1,10 @@
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+const { getDefaultConfig } = require('expo/metro-config');
 
 /**
- * Metro configuration for React Native.
- * @see https://reactnative.dev/docs/metro
+ * Metro configuration for Expo.
  */
-const defaultConfig = getDefaultConfig(__dirname);
-defaultConfig.resolver.assetExts.push('tflite', 'txt');
+const config = getDefaultConfig(__dirname);
 
-const config = {};
+config.resolver.assetExts.push('tflite', 'txt');
 
-module.exports = mergeConfig(defaultConfig, config);
+module.exports = config;

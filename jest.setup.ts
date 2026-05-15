@@ -1,15 +1,10 @@
 import '@testing-library/jest-native/extend-expect';
 
-// Мок для react-native-tts
-jest.mock('react-native-tts', () => ({
+// Мок для expo-speech
+jest.mock('expo-speech', () => ({
   speak: jest.fn(),
   stop: jest.fn(),
-  setDefaultRate: jest.fn(),
-  setDefaultPitch: jest.fn(),
-  setDefaultLanguage: jest.fn(),
-  voices: jest.fn().mockResolvedValue([]),
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
+  getAvailableVoicesAsync: jest.fn().mockResolvedValue([]),
 }));
 
 // Мок для react-native-vision-camera
@@ -70,11 +65,13 @@ jest.mock('react-native-keychain', () => ({
   resetGenericPassword: jest.fn(),
 }));
 
-// Мок для react-native-sqlite-storage
-jest.mock('react-native-sqlite-storage', () => ({
-  openDatabase: jest.fn().mockReturnValue({
-    transaction: jest.fn(),
-    executeSql: jest.fn(),
+// Мок для expo-sqlite
+jest.mock('expo-sqlite', () => ({
+  openDatabaseAsync: jest.fn().mockResolvedValue({
+    execAsync: jest.fn(),
+    runAsync: jest.fn(),
+    getFirstAsync: jest.fn(),
+    getAllAsync: jest.fn(),
   }),
 }));
 

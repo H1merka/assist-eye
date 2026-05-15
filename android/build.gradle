@@ -1,23 +1,14 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-  ext {
-    kotlinVersion = "2.1.20"
-    // Override Android SDK and toolchain settings to satisfy native dependencies
-    compileSdkVersion = 36
-    targetSdkVersion = 36
-    minSdkVersion = 24
-    buildToolsVersion = "33.0.2"
-    ndkVersion = "27.0.12077973"
-  }
   repositories {
     google()
     mavenCentral()
   }
   dependencies {
-    classpath('com.android.tools.build:gradle:8.9.1')
+    classpath('com.android.tools.build:gradle')
     classpath('com.facebook.react:react-native-gradle-plugin')
-    classpath('org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.20')
+    classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
   }
 }
 
@@ -29,4 +20,5 @@ allprojects {
   }
 }
 
+apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"

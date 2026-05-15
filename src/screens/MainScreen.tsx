@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
-import { PermissionsAndroid, Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { PermissionsAndroid, Platform, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '@/context/AppContext';
 import MainButton from '@/components/MainButton';
 import StatusFeedback from '@/components/StatusFeedback';
+import MapDisplay from '@/components/MapDisplay';
 import { COLORS } from '@/constants/Colors';
 import { speechRecognizer } from '@features/voiceInterface/data/voskSpeechRecognizer';
 import { useCommandProcessor } from '@features/commandProcessor/store/commandStore';
@@ -104,6 +106,8 @@ export default function MainScreen() {
             isActive={status === 'listening'}
           />
         </View>
+
+        <MapDisplay />
 
         <View style={styles.statusArea}>
           <StatusFeedback message={statusMessage} status={status} />

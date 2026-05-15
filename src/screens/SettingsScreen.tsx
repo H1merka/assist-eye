@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Alert,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,6 +12,7 @@ import {
 } from 'react-native';
 import { useApp, Language } from '@/context/AppContext';
 import { COLORS } from '@/constants/Colors';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const SPEED_STEPS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 const SPEED_LABELS: Record<number, string> = {
@@ -34,8 +34,6 @@ export default function SettingsScreen() {
     setVibrationEnabled,
     history,
     clearHistory,
-    yandexApiKey,
-    setYandexApiKey,
     t,
   } = useApp();
 
@@ -175,19 +173,6 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>{t('settings.yandexKey')}</Text>
-          <TextInput
-            value={yandexApiKey}
-            onChangeText={setYandexApiKey}
-            placeholder={t('settings.yandexKeyPlaceholder')}
-            placeholderTextColor={COLORS.textMuted}
-            autoCapitalize="none"
-            autoCorrect={false}
-            accessibilityLabel={t('settings.yandexKey')}
-            accessibilityHint={t('settings.yandexKeyHint')}
-            style={styles.apiKeyInput}
-          />
         </View>
 
         <View style={styles.section}>
@@ -358,14 +343,6 @@ const styles = StyleSheet.create({
   },
   toggleThumbOn: {
     alignSelf: 'flex-end',
-  },
-  apiKeyInput: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    color: COLORS.textPrimary,
   },
   clearButton: {
     height: 52,

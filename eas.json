@@ -1,0 +1,34 @@
+{
+  "build": {
+    "development": {
+      "distribution": "internal",
+      "ios": {
+        "buildType": "development"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "buildType": "simulator"
+      }
+    },
+    "production": {
+      "ios": {
+        "buildType": "release"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "YOUR_APPLE_ID",
+        "ascAppId": "YOUR_APPLE_APP_ID",
+        "appleTeamId": "YOUR_APPLE_TEAM_ID"
+      },
+      "android": {
+        "serviceAccountKeyPath": "YOUR_GOOGLE_PLAY_JSON_KEY_PATH",
+        "track": "production"
+      }
+    }
+  }
+}

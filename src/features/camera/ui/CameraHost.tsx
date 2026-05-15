@@ -102,7 +102,7 @@ export function CameraHost() {
     }
   }, [isActive]);
 
-  if (!device) {
+  if (!device || !hasPermission) {
     return null;
   }
 
