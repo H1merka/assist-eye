@@ -13,7 +13,8 @@
       "buildNumber": "1.0.0"
     },
     "android": {
-      "package": "com.anonymous.assisteye"
+      "package": "com.example.assisteye",
+      "minSdk": 26
     },
     "plugins": [
       "./plugins/permissions-plugin"

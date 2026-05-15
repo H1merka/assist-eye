@@ -169,13 +169,11 @@ export default function SettingsScreen() {
               <View style={[styles.toggleTrack, vibrationEnabled && styles.toggleTrackOn]}>
                 <View style={[styles.toggleThumb, vibrationEnabled && styles.toggleThumbOn]} />
               </View>
-            </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         </View>
+      </View>
 
-        </View>
-
-        <View style={styles.section}>
+      <View style={styles.section}>
           <TouchableOpacity
             onPress={handleClearHistory}
             disabled={history.length === 0}

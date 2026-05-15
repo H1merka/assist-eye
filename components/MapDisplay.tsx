@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import YaMap from 'react-native-yamap';
+import YaMap from 'react-native-yamap-plus';
 import { COLORS } from '@/constants/Colors';
 
 /**

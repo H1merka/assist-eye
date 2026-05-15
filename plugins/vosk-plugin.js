@@ -26,6 +26,7 @@ module.exports = function withVosk(config) {
         }
       }
       return config;
+    }
   ]);
 
   config = withDangerousMod(config, [
