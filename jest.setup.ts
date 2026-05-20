@@ -75,6 +75,17 @@ jest.mock('expo-sqlite', () => ({
   }),
 }));
 
+// Мок для expo-location
+jest.mock('expo-location', () => ({
+  PermissionStatus: { GRANTED: 'granted' },
+  Accuracy: { High: 3 },
+  getForegroundPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  requestForegroundPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  getCurrentPositionAsync: jest.fn().mockResolvedValue({
+    coords: { latitude: 55.75, longitude: 37.62 },
+  }),
+}));
+
 // Мок для react-native-fs
 jest.mock('react-native-fs', () => ({
   DocumentDirectoryPath: '/tmp',

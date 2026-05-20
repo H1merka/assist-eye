@@ -46,8 +46,6 @@ export default function MainScreen() {
       }
     };
 
-    // Активируем камеру для превью
-    setCameraActive(true);
     initVosk();
 
     speechRecognizer.onResult(text => {
@@ -88,9 +86,6 @@ export default function MainScreen() {
   }, []);
 
   const statusMessage = (() => {
-    if (captureAwaiting) {
-      return t('status.capturePrompt');
-    }
     switch (status) {
     case 'idle':
       return t('status.ready');
@@ -160,19 +155,27 @@ export default function MainScreen() {
     lastCaptureTapRef.current = now;
   };
 
+  if (captureAwaiting) {
+    return (
+      <SafeAreaView style={styles.captureSafe}>
+        <Pressable
+          style={styles.captureOverlay}
+          onPress={handleCaptureTap}
+          accessibilityRole="button"
+          accessibilityLabel={t('status.capturePrompt')}
+          accessibilityHint={t('status.capturePrompt')}
+        >
+          <View style={styles.captureHint}>
+            <Text style={styles.captureHintText}>{t('status.capturePrompt')}</Text>
+          </View>
+        </Pressable>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
-        {captureAwaiting && (
-          <Pressable
-            style={styles.captureOverlay}
-            onPress={handleCaptureTap}
-            accessibilityRole="button"
-            accessibilityLabel={t('status.capturePrompt')}
-            accessibilityHint={t('status.capturePrompt')}
-          />
-        )}
-        <View style={styles.overlay} />
         <View style={styles.header}>
           <Text
             style={styles.appTitle}
@@ -210,7 +213,7 @@ export default function MainScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#000', // Черный фон для камеры
+    backgroundColor: COLORS.background,
   },
   container: {
     flex: 1,
@@ -218,15 +221,34 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? 32 : 16,
     paddingBottom: 16,
     alignItems: 'center',
+    backgroundColor: COLORS.background,
+  },
+  captureSafe: {
+    flex: 1,
     backgroundColor: 'transparent',
   },
   captureOverlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 3,
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)', // Затемнение для читаемости UI поверх камеры
+  captureHint: {
+    position: 'absolute',
+    left: 24,
+    right: 24,
+    bottom: 32,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  captureHintText: {
+    color: COLORS.textPrimary,
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 24,
   },
   header: {
     alignItems: 'center',

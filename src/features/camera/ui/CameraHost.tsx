@@ -99,7 +99,7 @@ export function CameraHost() {
     }
   }, [isActive]);
 
-  if (!device || !hasPermission) {
+  if (!device || !hasPermission || !isActive) {
     return null;
   }
 

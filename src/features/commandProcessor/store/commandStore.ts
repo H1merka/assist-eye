@@ -4,7 +4,7 @@ import { Logger } from '@core/utils/logger';
 import { isFeatureEnabled } from '@core/config/featureFlags';
 import { CommandProcessorDependencies } from '../domain/commandProcessorDependencies';
 import { createDefaultDependencies } from '../data/commandProcessorDependencyFactory';
-import { SPEECH_RATE_STEPS } from '@core/constants/appConstants';
+import { BANKNOTE_INPUT_SIZE, SPEECH_RATE_STEPS, YOLO_INPUT_SIZE } from '@core/constants/appConstants';
 import i18n from '@i18n/i18n';
 import {
   BANKNOTE_LOW_CONFIDENCE,
@@ -175,24 +175,34 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
         }
 
         if (!deps.objectDetector.isReady()) {
-          await deps.objectDetector.initialize();
+          const initResult = await deps.objectDetector.initialize();
           if (isCancelled()) {
             return;
           }
+          if (!initResult.ok) {
+            const message = resolveErrorMessage(initResult.errorCode, initResult.userMessage);
+            await deps.tts.speak(message);
+            set({ state: 'error', errorMessage: message });
+            break;
+          }
         }
 
-        const photoResult = await deps.capturePhoto();
+        const frameResult = await deps.captureFrameTensor(
+          YOLO_INPUT_SIZE,
+          YOLO_INPUT_SIZE,
+          6000,
+        );
         if (isCancelled()) {
           return;
         }
-        if (!photoResult.ok) {
-          const message = resolveErrorMessage(photoResult.errorCode, photoResult.userMessage);
+        if (!frameResult.ok) {
+          const message = resolveErrorMessage(frameResult.errorCode, frameResult.userMessage);
           await deps.tts.speak(message);
           set({ state: 'error', errorMessage: message });
           break;
         }
 
-        const detectResult = await deps.objectDetector.detect(photoResult.data!);
+        const detectResult = await deps.objectDetector.detect(frameResult.data!);
         if (isCancelled()) {
           return;
         }
@@ -232,24 +242,34 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
         }
 
         if (!deps.banknoteClassifier.isReady()) {
-          await deps.banknoteClassifier.initialize();
+          const initResult = await deps.banknoteClassifier.initialize();
           if (isCancelled()) {
             return;
           }
+          if (!initResult.ok) {
+            const message = resolveErrorMessage(initResult.errorCode, initResult.userMessage);
+            await deps.tts.speak(message);
+            set({ state: 'error', errorMessage: message });
+            break;
+          }
         }
 
-        const photoResult = await deps.capturePhoto();
+        const frameResult = await deps.captureFrameTensor(
+          BANKNOTE_INPUT_SIZE,
+          BANKNOTE_INPUT_SIZE,
+          4000,
+        );
         if (isCancelled()) {
           return;
         }
-        if (!photoResult.ok) {
-          const message = resolveErrorMessage(photoResult.errorCode, photoResult.userMessage);
+        if (!frameResult.ok) {
+          const message = resolveErrorMessage(frameResult.errorCode, frameResult.userMessage);
           await deps.tts.speak(message);
           set({ state: 'error', errorMessage: message });
           break;
         }
 
-        const banknoteResult = await deps.banknoteClassifier.classify(photoResult.data!);
+        const banknoteResult = await deps.banknoteClassifier.classify(frameResult.data!);
         if (isCancelled()) {
           return;
         }
