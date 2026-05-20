@@ -44,10 +44,15 @@ export interface CommandProcessorDependencies {
     width: number,
     height: number,
     timeoutMs?: number,
-  ) => Promise<{ok: boolean; data?: Uint8Array; userMessage?: string}>;
+  ) => Promise<{ok: boolean; data?: Uint8Array; userMessage?: string; errorCode?: string}>;
   /**
    * Camera photo capture function.
    * @returns {ok, data} where data is file path on success
    */
-  capturePhoto: () => Promise<{ok: boolean; data?: string; userMessage?: string}>;
+  capturePhoto: () => Promise<{
+    ok: boolean;
+    data?: string;
+    userMessage?: string;
+    errorCode?: string;
+  }>;
 }

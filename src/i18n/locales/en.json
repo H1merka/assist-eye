@@ -59,6 +59,27 @@
     "repeat": "Repeat",
     "stop": "Stop"
   },
+  "voice": {
+    "readPrompt": "Reading the text. Point the camera at the text and double tap the screen to take a photo.",
+    "describePrompt": "Describing the scene. Point the camera and double tap the screen to take a photo.",
+    "banknotePrompt": "Identifying the banknote. Point the camera at the banknote and double tap the screen to take a photo.",
+    "detected": "I see: {{labels}}",
+    "banknoteDetected": "Detected: {{label}}",
+    "defaultDestination": "Nearest pharmacy",
+    "navigationStart": "Route built. Destination: {{destination}}. Start moving.",
+    "navigationSummary": "Route to {{destination}} built",
+    "help": "Available commands: Read, Describe, Banknote, Navigate, Help, Repeat, Stop, Faster, Slower, Vibration on, Vibration off, Russian language, English language",
+    "settingsUnavailable": "Settings are unavailable",
+    "speechRateMax": "Speech rate is already at maximum",
+    "speechRateMin": "Speech rate is already at minimum",
+    "speechRateUp": "Speech rate increased to {{value}}x",
+    "speechRateDown": "Speech rate decreased to {{value}}x",
+    "vibrationOn": "Vibration on",
+    "vibrationOff": "Vibration off",
+    "languageRu": "Switching language to Russian",
+    "languageEn": "Switching language to English",
+    "noPreviousResult": "No previous result"
+  },
   "errors": {
     "notUnderstood": "Didn't understand — say again",
     "cameraPermission": "Camera permission is required. Please enable it in settings.",
@@ -68,6 +89,10 @@
     "noText": "No text detected — move the camera closer.",
     "noObjects": "Could not recognize objects — try pointing the camera differently.",
     "featureDisabled": "This feature is not available yet.",
+    "banknoteLowConfidence": "Not confident — bring the banknote closer and flatten it.",
+    "navigationApiKeyMissing": "Yandex Maps API key is required.",
+    "navigationOffline": "Internet connection is required for navigation.",
+    "navigationRouteFailed": "Route could not be built.",
     "generic": "An error occurred — try again."
   }
 }

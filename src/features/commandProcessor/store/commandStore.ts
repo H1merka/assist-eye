@@ -5,6 +5,21 @@ import { isFeatureEnabled } from '@core/config/featureFlags';
 import { CommandProcessorDependencies } from '../domain/commandProcessorDependencies';
 import { createDefaultDependencies } from '../data/commandProcessorDependencyFactory';
 import { SPEECH_RATE_STEPS } from '@core/constants/appConstants';
+import i18n from '@i18n/i18n';
+import {
+  BANKNOTE_LOW_CONFIDENCE,
+  CAMERA_INIT_FAILED,
+  CAMERA_PERMISSION_DENIED,
+  DETECTION_MODEL_FAILED,
+  DETECTION_MODEL_NOT_LOADED,
+  DETECTION_NO_OBJECTS,
+  NAVIGATION_API_KEY_MISSING,
+  NAVIGATION_GEOCODE_FAILED,
+  NAVIGATION_OFFLINE,
+  NAVIGATION_ROUTE_FAILED,
+  OCR_NO_TEXT,
+  OCR_PROCESSING_FAILED,
+} from '@core/errors/errorCodes';
 
 export type ProcessorState = 'idle' | 'listening' | 'processing' | 'success' | 'error';
 
@@ -21,6 +36,33 @@ interface CommandProcessorState {
 
 let dependenciesInstance: CommandProcessorDependencies | null = null;
 let activeRequestId = 0;
+
+const ERROR_CODE_TO_I18N_KEY: Record<string, string> = {
+  [CAMERA_PERMISSION_DENIED]: 'errors.cameraPermission',
+  [CAMERA_INIT_FAILED]: 'errors.generic',
+  [OCR_NO_TEXT]: 'errors.noText',
+  [OCR_PROCESSING_FAILED]: 'errors.generic',
+  [DETECTION_NO_OBJECTS]: 'errors.noObjects',
+  [DETECTION_MODEL_FAILED]: 'errors.generic',
+  [DETECTION_MODEL_NOT_LOADED]: 'errors.modelNotLoaded',
+  [BANKNOTE_LOW_CONFIDENCE]: 'errors.banknoteLowConfidence',
+  [NAVIGATION_API_KEY_MISSING]: 'errors.navigationApiKeyMissing',
+  [NAVIGATION_GEOCODE_FAILED]: 'errors.navigationRouteFailed',
+  [NAVIGATION_OFFLINE]: 'errors.navigationOffline',
+  [NAVIGATION_ROUTE_FAILED]: 'errors.navigationRouteFailed',
+};
+
+const t = (key: string, options?: Record<string, unknown>) => i18n.t(key, options);
+
+function resolveErrorMessage(errorCode?: string, fallback?: string): string {
+  if (errorCode && ERROR_CODE_TO_I18N_KEY[errorCode]) {
+    return t(ERROR_CODE_TO_I18N_KEY[errorCode]);
+  }
+  if (fallback) {
+    return fallback;
+  }
+  return t('errors.generic');
+}
 
 function getClosestSpeechStepIndex(value: number): number {
   let closestIndex = 0;
@@ -86,9 +128,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
         if (!isFeatureEnabled('onboarding')) {
           // Note: 'Read' doesn't require feature flag, it's core functionality
         }
-        await deps.tts.speak(
-          'Читаю текст перед вами. Поднесите текст к камере и дважды нажмите на экран для снимка.',
-        );
+        await deps.tts.speak(t('voice.readPrompt'));
         if (isCancelled()) {
           return;
         }
@@ -98,8 +138,9 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
             return;
           }
           if (!photoResult.ok) {
-            await deps.tts.speak(photoResult.userMessage || 'Ошибка камеры');
-            set({ state: 'error', errorMessage: photoResult.userMessage || 'Ошибка камеры' });
+            const message = resolveErrorMessage(photoResult.errorCode, photoResult.userMessage);
+            await deps.tts.speak(message);
+            set({ state: 'error', errorMessage: message });
             break;
           }
 
@@ -108,8 +149,9 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
             return;
           }
           if (!ocrResult.ok) {
-            await deps.tts.speak(ocrResult.userMessage);
-            set({ state: 'error', errorMessage: ocrResult.userMessage });
+            const message = resolveErrorMessage(ocrResult.errorCode, ocrResult.userMessage);
+            await deps.tts.speak(message);
+            set({ state: 'error', errorMessage: message });
             break;
           }
 
@@ -127,9 +169,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
         break;
 
       case CommandType.Describe: {
-        await deps.tts.speak(
-          'Опишу сцену. Наведите камеру и дважды нажмите на экран для снимка.',
-        );
+        await deps.tts.speak(t('voice.describePrompt'));
         if (isCancelled()) {
           return;
         }
@@ -146,8 +186,9 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           return;
         }
         if (!photoResult.ok) {
-          await deps.tts.speak(photoResult.userMessage || 'Ошибка камеры');
-          set({ state: 'error', errorMessage: photoResult.userMessage || 'Ошибка камеры' });
+          const message = resolveErrorMessage(photoResult.errorCode, photoResult.userMessage);
+          await deps.tts.speak(message);
+          set({ state: 'error', errorMessage: message });
           break;
         }
 
@@ -156,12 +197,12 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           return;
         }
         if (!detectResult.ok) {
-          const failMsg = detectResult.userMessage || 'Объекты не найдены';
-          await deps.tts.speak(failMsg);
-          set({ state: 'error', errorMessage: failMsg });
+          const message = resolveErrorMessage(detectResult.errorCode, detectResult.userMessage);
+          await deps.tts.speak(message);
+          set({ state: 'error', errorMessage: message });
         } else if (detectResult.data.length > 0) {
           const labelsStr = detectResult.data.map(r => r.label).join(', ');
-          const resultMsg = `Вижу: ${labelsStr}`;
+          const resultMsg = t('voice.detected', { labels: labelsStr });
           await deps.tts.speak(resultMsg);
           set({
             state: 'success',
@@ -170,23 +211,22 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
             lastResultAt: Date.now(),
           });
         } else {
-          const failMsg = 'Объекты не найдены';
-          await deps.tts.speak(failMsg);
-          set({ state: 'error', errorMessage: failMsg });
+          const message = t('errors.noObjects');
+          await deps.tts.speak(message);
+          set({ state: 'error', errorMessage: message });
         }
         break;
       }
 
       case CommandType.Banknote: {
         if (!isFeatureEnabled('banknoteClassifier')) {
-          await deps.tts.speak('Функция пока недоступна');
-          set({ state: 'error', errorMessage: 'Функция пока недоступна' });
+          const message = t('errors.featureDisabled');
+          await deps.tts.speak(message);
+          set({ state: 'error', errorMessage: message });
           break;
         }
 
-        await deps.tts.speak(
-          'Определяю купюру. Поднесите купюру к камере и дважды нажмите на экран для снимка.',
-        );
+        await deps.tts.speak(t('voice.banknotePrompt'));
         if (isCancelled()) {
           return;
         }
@@ -203,11 +243,9 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           return;
         }
         if (!photoResult.ok) {
-          await deps.tts.speak(photoResult.userMessage || 'Ошибка камеры');
-          set({
-            state: 'error',
-            errorMessage: photoResult.userMessage || 'Ошибка камеры',
-          });
+          const message = resolveErrorMessage(photoResult.errorCode, photoResult.userMessage);
+          await deps.tts.speak(message);
+          set({ state: 'error', errorMessage: message });
           break;
         }
 
@@ -216,7 +254,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           return;
         }
         if (banknoteResult.ok) {
-          const finalMsg = `Определено: ${banknoteResult.data}`;
+          const finalMsg = t('voice.banknoteDetected', { label: banknoteResult.data });
           await deps.tts.speak(finalMsg);
           set({
             state: 'success',
@@ -225,24 +263,26 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
             lastResultAt: Date.now(),
           });
         } else {
-          await deps.tts.speak(banknoteResult.userMessage);
-          set({ state: 'error', errorMessage: banknoteResult.userMessage });
+          const message = resolveErrorMessage(
+            banknoteResult.errorCode,
+            banknoteResult.userMessage,
+          );
+          await deps.tts.speak(message);
+          set({ state: 'error', errorMessage: message });
         }
         break;
       }
 
       case CommandType.Navigate:
         const mockDestination =
-            text.replace(/навигация|маршрут|веди/gi, '').trim() || 'Ближайшая аптека';
+            text.replace(/навигация|маршрут|веди/gi, '').trim() || t('voice.defaultDestination');
 
         const navigationResult = await deps.spatialNavigation.buildRoute(mockDestination);
         if (isCancelled()) {
           return;
         }
         if (navigationResult.ok) {
-          await deps.tts.speak(
-            `Построен маршрут. Направление: ${mockDestination}. Начните движение.`,
-          );
+          await deps.tts.speak(t('voice.navigationStart', { destination: mockDestination }));
           if (isCancelled()) {
             return;
           }
@@ -252,19 +292,22 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           });
           set({
             state: 'success',
-            lastResult: `Маршрут до ${mockDestination} построен`,
+            lastResult: t('voice.navigationSummary', { destination: mockDestination }),
             lastResultType: 'navigation',
             lastResultAt: Date.now(),
           });
         } else {
-          await deps.tts.speak(navigationResult.userMessage);
-          set({ state: 'error', errorMessage: navigationResult.userMessage });
+          const message = resolveErrorMessage(
+            navigationResult.errorCode,
+            navigationResult.userMessage,
+          );
+          await deps.tts.speak(message);
+          set({ state: 'error', errorMessage: message });
         }
         break;
 
       case CommandType.Help:
-        const helpStr =
-            'Доступные команды: Прочитай, Опиши, Купюра, Навигация, Помощь, Повтори, Стоп, Быстрее, Медленнее, Включи вибрацию, Выключи вибрацию, Русский язык, Английский язык';
+        const helpStr = t('voice.help');
         await deps.tts.speak(helpStr);
         if (isCancelled()) {
           return;
@@ -279,14 +322,14 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
 
       case CommandType.SpeechFaster: {
         if (!deps.settings.isReady()) {
-          const msg = 'Настройки недоступны';
+          const msg = t('voice.settingsUnavailable');
           await deps.tts.speak(msg);
           set({ state: 'error', errorMessage: msg });
           break;
         }
         const settingsState = deps.settings.getState();
         if (!settingsState) {
-          const msg = 'Настройки недоступны';
+          const msg = t('voice.settingsUnavailable');
           await deps.tts.speak(msg);
           set({ state: 'error', errorMessage: msg });
           break;
@@ -296,7 +339,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           'up',
         );
         if (nextIndex === currentIndex) {
-          const msg = 'Скорость речи уже максимальная';
+          const msg = t('voice.speechRateMax');
           await deps.tts.speak(msg);
           if (isCancelled()) {
             return;
@@ -313,7 +356,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           return;
         }
         deps.settings.setSpeechSpeed(nextValue);
-        const msg = `Скорость речи увеличена до ${nextValue}x`;
+        const msg = t('voice.speechRateUp', { value: nextValue });
         await deps.tts.speak(msg);
         if (isCancelled()) {
           return;
@@ -329,14 +372,14 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
 
       case CommandType.SpeechSlower: {
         if (!deps.settings.isReady()) {
-          const msg = 'Настройки недоступны';
+          const msg = t('voice.settingsUnavailable');
           await deps.tts.speak(msg);
           set({ state: 'error', errorMessage: msg });
           break;
         }
         const settingsState = deps.settings.getState();
         if (!settingsState) {
-          const msg = 'Настройки недоступны';
+          const msg = t('voice.settingsUnavailable');
           await deps.tts.speak(msg);
           set({ state: 'error', errorMessage: msg });
           break;
@@ -346,7 +389,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           'down',
         );
         if (nextIndex === currentIndex) {
-          const msg = 'Скорость речи уже минимальная';
+          const msg = t('voice.speechRateMin');
           await deps.tts.speak(msg);
           if (isCancelled()) {
             return;
@@ -363,7 +406,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           return;
         }
         deps.settings.setSpeechSpeed(nextValue);
-        const msg = `Скорость речи уменьшена до ${nextValue}x`;
+        const msg = t('voice.speechRateDown', { value: nextValue });
         await deps.tts.speak(msg);
         if (isCancelled()) {
           return;
@@ -379,7 +422,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
 
       case CommandType.VibrationOn: {
         if (!deps.settings.isReady()) {
-          const msg = 'Настройки недоступны';
+          const msg = t('voice.settingsUnavailable');
           await deps.tts.speak(msg);
           set({ state: 'error', errorMessage: msg });
           break;
@@ -388,7 +431,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           return;
         }
         deps.settings.setVibrationEnabled(true);
-        const msg = 'Вибрация включена';
+        const msg = t('voice.vibrationOn');
         await deps.tts.speak(msg);
         if (isCancelled()) {
           return;
@@ -404,7 +447,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
 
       case CommandType.VibrationOff: {
         if (!deps.settings.isReady()) {
-          const msg = 'Настройки недоступны';
+          const msg = t('voice.settingsUnavailable');
           await deps.tts.speak(msg);
           set({ state: 'error', errorMessage: msg });
           break;
@@ -413,7 +456,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           return;
         }
         deps.settings.setVibrationEnabled(false);
-        const msg = 'Вибрация выключена';
+        const msg = t('voice.vibrationOff');
         await deps.tts.speak(msg);
         if (isCancelled()) {
           return;
@@ -429,12 +472,12 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
 
       case CommandType.LanguageRu: {
         if (!deps.settings.isReady()) {
-          const msg = 'Настройки недоступны';
+          const msg = t('voice.settingsUnavailable');
           await deps.tts.speak(msg);
           set({ state: 'error', errorMessage: msg });
           break;
         }
-        const msg = 'Переключаю язык на русский';
+        const msg = t('voice.languageRu');
         await deps.tts.speak(msg);
         if (isCancelled()) {
           return;
@@ -451,12 +494,12 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
 
       case CommandType.LanguageEn: {
         if (!deps.settings.isReady()) {
-          const msg = 'Настройки недоступны';
+          const msg = t('voice.settingsUnavailable');
           await deps.tts.speak(msg);
           set({ state: 'error', errorMessage: msg });
           break;
         }
-        const msg = 'Переключаю язык на английский';
+        const msg = t('voice.languageEn');
         await deps.tts.speak(msg);
         if (isCancelled()) {
           return;
@@ -480,19 +523,19 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
         return;
 
       case CommandType.Unknown:
-        await deps.tts.speak('Не понял, скажите ещё раз');
+        await deps.tts.speak(t('errors.notUnderstood'));
         if (isCancelled()) {
           return;
         }
-        set({ state: 'error', errorMessage: 'Не понял — скажите ещё раз' });
+        set({ state: 'error', errorMessage: t('errors.notUnderstood') });
         break;
       }
     } catch (error) {
       Logger.error('CommandProcessor', 'Необработанная ошибка', error);
-      await deps.tts.speak('Произошла ошибка, попробуйте ещё раз');
+      await deps.tts.speak(t('errors.generic'));
       set({
         state: 'error',
-        errorMessage: 'Произошла ошибка — попробуйте ещё раз',
+        errorMessage: t('errors.generic'),
       });
     }
   },
@@ -514,8 +557,9 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
         Logger.info('CommandProcessor', 'Повтор последнего результата');
         set({ state: 'success' });
       } else {
-        void deps.tts.speak('Нет предыдущего результата');
-        set({ state: 'error', errorMessage: 'Нет предыдущего результата' });
+        const message = t('voice.noPreviousResult');
+        void deps.tts.speak(message);
+        set({ state: 'error', errorMessage: message });
       }
     });
   },

@@ -12,6 +12,7 @@ module.exports = ({ config }) => {
     plugins: [
       ...(config.plugins || []),
       ['./plugins/min-sdk-plugin', { minSdkVersion: 26 }],
+      './plugins/permissions-plugin',
       './plugins/vision-camera-plugin',
       './plugins/fast-tflite-plugin',
       './plugins/vosk-plugin',

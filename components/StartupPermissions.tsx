@@ -17,11 +17,18 @@ async function requestMicPermission(): Promise<void> {
   await request(PERMISSIONS.IOS.MICROPHONE);
 }
 
+async function requestCameraPermission(): Promise<void> {
+  if (Platform.OS === 'android') {
+    await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
+  }
+}
+
 export default function StartupPermissions() {
   const { hasPermission, requestPermission } = useCameraPermission();
 
   useEffect(() => {
     void requestMicPermission();
+    void requestCameraPermission();
   }, []);
 
   useEffect(() => {
