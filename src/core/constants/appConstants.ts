@@ -34,6 +34,9 @@ export const MODEL_DISPOSE_TIMEOUT_MS = 60_000;
 /** Таймаут для промежуточного сообщения «Обрабатываю…» */
 export const PROCESSING_FEEDBACK_DELAY_MS = 1_500;
 
+/** Ожидание подтверждения снимка пользователем */
+export const CAPTURE_CONFIRM_TIMEOUT_MS = 20_000;
+
 // ---------- Image sizes ----------
 
 /** Входной размер YOLO11n (проверьте соответствие модели) */
@@ -76,6 +79,9 @@ export const TTS_RATE_MAX = 2.0;
 
 /** Скорость речи по умолчанию */
 export const TTS_RATE_DEFAULT = 1.0;
+
+/** Доступные шаги скорости речи */
+export const SPEECH_RATE_STEPS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
 // ---------- UI ----------
 

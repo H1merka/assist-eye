@@ -11,6 +11,15 @@ import { BanknoteClassifier } from '@features/banknoteClassifier/domain/banknote
 import { OcrService } from '@features/ocr/domain/ocrService';
 import { SpatialNavigationService } from '@features/spatialNavigation/domain/spatialNavigationService';
 import { HistoryRepository } from '@features/storage/domain/historyRepository';
+import type { AppLanguage, AppSettingsSnapshot } from '@core/settings/appSettingsBridge';
+
+export interface SettingsController {
+  isReady: () => boolean;
+  getState: () => AppSettingsSnapshot | null;
+  setLanguage: (lang: AppLanguage) => void;
+  setSpeechSpeed: (speed: number) => void;
+  setVibrationEnabled: (enabled: boolean) => void;
+}
 
 /**
  * Service container for command processing.
@@ -23,6 +32,7 @@ export interface CommandProcessorDependencies {
   ocr: OcrService;
   spatialNavigation: SpatialNavigationService;
   history: HistoryRepository;
+  settings: SettingsController;
   /**
    * Camera frame tensor capture function.
    * @param width Target width

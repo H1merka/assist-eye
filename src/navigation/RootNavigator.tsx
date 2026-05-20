@@ -4,12 +4,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import { COLORS } from '@/constants/Colors';
 import { useApp } from '@/context/AppContext';
 import MainScreen from '@/src/screens/MainScreen';
-import HistoryScreen from '@/src/screens/HistoryScreen';
 import SettingsScreen from '@/src/screens/SettingsScreen';
 
 export type RootTabParamList = {
   Main: undefined;
-  History: undefined;
   Settings: undefined;
 };
 
@@ -45,14 +43,6 @@ export default function RootNavigator() {
           options={{
             title: t('tabs.main'),
             tabBarAccessibilityLabel: t('tabs.main'),
-          }}
-        />
-        <Tab.Screen
-          name="History"
-          component={HistoryScreen}
-          options={{
-            title: t('tabs.history'),
-            tabBarAccessibilityLabel: t('tabs.history'),
           }}
         />
         <Tab.Screen

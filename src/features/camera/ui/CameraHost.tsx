@@ -24,7 +24,7 @@ type FrameTensorRequest = {
 export function CameraHost() {
   const cameraRef = useRef<Camera | null>(null);
   const device = useCameraDevice('back');
-  const { hasPermission, requestPermission } = useCameraPermission();
+  const { hasPermission } = useCameraPermission();
   const [isActive, setIsActive] = useState(false);
   const requestIdRef = useRef(0);
   const pendingRequests = useRef(
@@ -90,11 +90,8 @@ export function CameraHost() {
   }, []);
 
   useEffect(() => {
-    if (!hasPermission) {
-      requestPermission();
-    }
     setCameraPermission(!!hasPermission);
-  }, [hasPermission, requestPermission]);
+  }, [hasPermission]);
 
   useEffect(() => {
     if (isActive && cameraRef.current) {
@@ -123,12 +120,10 @@ export function CameraHost() {
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    width: 1,
-    height: 1,
-    opacity: 0,
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000',
   },
   camera: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
   },
 });

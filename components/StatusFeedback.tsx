@@ -6,6 +6,7 @@ import { COLORS } from '@/constants/Colors';
 interface StatusFeedbackProps {
   message: string;
   status: AppStatus;
+  transcript?: string;
 }
 
 const STATUS_COLORS: Record<AppStatus, string> = {
@@ -15,7 +16,7 @@ const STATUS_COLORS: Record<AppStatus, string> = {
   ready: COLORS.statusReady,
 };
 
-export default function StatusFeedback({ message, status }: StatusFeedbackProps) {
+export default function StatusFeedback({ message, status, transcript }: StatusFeedbackProps) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const dotAnim = useRef(new Animated.Value(0)).current;
 
@@ -47,7 +48,7 @@ export default function StatusFeedback({ message, status }: StatusFeedbackProps)
       style={[styles.container, { opacity: fadeAnim }]}
       accessibilityLiveRegion="polite"
       accessibilityRole="text"
-      accessibilityLabel={message}
+      accessibilityLabel={`${message}${transcript ? `. Слышу: ${transcript}` : ''}`}
     >
       <View style={styles.row}>
         <Animated.View
@@ -62,7 +63,12 @@ export default function StatusFeedback({ message, status }: StatusFeedbackProps)
             },
           ]}
         />
-        <Text style={styles.text}>{message}</Text>
+        <View style={styles.textContainer}>
+          <Text style={styles.text}>{message}</Text>
+          {status === 'listening' && transcript && (
+            <Text style={styles.transcript} numberOfLines={1}>{transcript}</Text>
+          )}
+        </View>
       </View>
     </Animated.View>
   );
@@ -72,9 +78,9 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.surface,
     borderRadius: 16,
-    paddingVertical: 20,
-    paddingHorizontal: 28,
-    minHeight: 72,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    minHeight: 80,
     justifyContent: 'center',
     width: '100%',
     borderWidth: 1,
@@ -85,16 +91,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  textContainer: {
+    flex: 1,
+  },
   indicator: {
     width: 12,
     height: 12,
     borderRadius: 6,
   },
   text: {
-    fontSize: 20,
-    fontWeight: '500',
+    fontSize: 18,
+    fontWeight: '700',
     color: COLORS.textPrimary,
-    flex: 1,
-    lineHeight: 28,
+    lineHeight: 24,
+  },
+  transcript: {
+    fontSize: 14,
+    color: COLORS.accent,
+    marginTop: 2,
+    fontStyle: 'italic',
   },
 });

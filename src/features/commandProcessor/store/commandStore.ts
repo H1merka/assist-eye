@@ -4,7 +4,7 @@ import { Logger } from '@core/utils/logger';
 import { isFeatureEnabled } from '@core/config/featureFlags';
 import { CommandProcessorDependencies } from '../domain/commandProcessorDependencies';
 import { createDefaultDependencies } from '../data/commandProcessorDependencyFactory';
-import { BANKNOTE_INPUT_SIZE, YOLO_INPUT_SIZE } from '@core/constants/appConstants';
+import { SPEECH_RATE_STEPS } from '@core/constants/appConstants';
 
 export type ProcessorState = 'idle' | 'listening' | 'processing' | 'success' | 'error';
 
@@ -20,6 +20,33 @@ interface CommandProcessorState {
 }
 
 let dependenciesInstance: CommandProcessorDependencies | null = null;
+let activeRequestId = 0;
+
+function getClosestSpeechStepIndex(value: number): number {
+  let closestIndex = 0;
+  let closestDelta = Number.POSITIVE_INFINITY;
+  SPEECH_RATE_STEPS.forEach((step, index) => {
+    const delta = Math.abs(step - value);
+    if (delta < closestDelta) {
+      closestDelta = delta;
+      closestIndex = index;
+    }
+  });
+  return closestIndex;
+}
+
+function getNextSpeechStep(value: number, direction: 'up' | 'down') {
+  const currentIndex = getClosestSpeechStepIndex(value);
+  const nextIndex =
+    direction === 'up'
+      ? Math.min(currentIndex + 1, SPEECH_RATE_STEPS.length - 1)
+      : Math.max(currentIndex - 1, 0);
+  return {
+    currentIndex,
+    nextIndex,
+    nextValue: SPEECH_RATE_STEPS[nextIndex],
+  };
+}
 
 function getDependencies(): CommandProcessorDependencies {
   if (!dependenciesInstance) {
@@ -46,6 +73,9 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
   processVoiceInput: async (text: string) => {
     const deps = getDependencies();
     const command = parseCommand(text);
+    const requestId = activeRequestId + 1;
+    activeRequestId = requestId;
+    const isCancelled = () => requestId !== activeRequestId;
     Logger.info('CommandProcessor', `Команда: ${command.type}`, { raw: text });
 
     set({ state: 'processing', errorMessage: null });
@@ -56,9 +86,17 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
         if (!isFeatureEnabled('onboarding')) {
           // Note: 'Read' doesn't require feature flag, it's core functionality
         }
-        await deps.tts.speak('Читаю текст перед вами...');
+        await deps.tts.speak(
+          'Читаю текст перед вами. Поднесите текст к камере и дважды нажмите на экран для снимка.',
+        );
+        if (isCancelled()) {
+          return;
+        }
         {
           const photoResult = await deps.capturePhoto();
+          if (isCancelled()) {
+            return;
+          }
           if (!photoResult.ok) {
             await deps.tts.speak(photoResult.userMessage || 'Ошибка камеры');
             set({ state: 'error', errorMessage: photoResult.userMessage || 'Ошибка камеры' });
@@ -66,6 +104,9 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           }
 
           const ocrResult = await deps.ocr.recognize(photoResult.data!);
+          if (isCancelled()) {
+            return;
+          }
           if (!ocrResult.ok) {
             await deps.tts.speak(ocrResult.userMessage);
             set({ state: 'error', errorMessage: ocrResult.userMessage });
@@ -73,6 +114,9 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           }
 
           await deps.tts.speak(ocrResult.data);
+          if (isCancelled()) {
+            return;
+          }
           set({
             state: 'success',
             lastResult: ocrResult.data,
@@ -82,21 +126,35 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
         }
         break;
 
-      case CommandType.Describe:
-        await deps.tts.speak('Делаю снимок для описания...');
+      case CommandType.Describe: {
+        await deps.tts.speak(
+          'Опишу сцену. Наведите камеру и дважды нажмите на экран для снимка.',
+        );
+        if (isCancelled()) {
+          return;
+        }
 
         if (!deps.objectDetector.isReady()) {
           await deps.objectDetector.initialize();
+          if (isCancelled()) {
+            return;
+          }
         }
 
-        const tensorResult = await deps.captureFrameTensor(YOLO_INPUT_SIZE, YOLO_INPUT_SIZE);
-        if (!tensorResult.ok) {
-          await deps.tts.speak(tensorResult.userMessage || 'Ошибка камеры');
-          set({ state: 'error', errorMessage: tensorResult.userMessage || 'Ошибка камеры' });
+        const photoResult = await deps.capturePhoto();
+        if (isCancelled()) {
+          return;
+        }
+        if (!photoResult.ok) {
+          await deps.tts.speak(photoResult.userMessage || 'Ошибка камеры');
+          set({ state: 'error', errorMessage: photoResult.userMessage || 'Ошибка камеры' });
           break;
         }
 
-        const detectResult = await deps.objectDetector.detect(tensorResult.data!);
+        const detectResult = await deps.objectDetector.detect(photoResult.data!);
+        if (isCancelled()) {
+          return;
+        }
         if (!detectResult.ok) {
           const failMsg = detectResult.userMessage || 'Объекты не найдены';
           await deps.tts.speak(failMsg);
@@ -117,34 +175,46 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           set({ state: 'error', errorMessage: failMsg });
         }
         break;
+      }
 
-      case CommandType.Banknote:
+      case CommandType.Banknote: {
         if (!isFeatureEnabled('banknoteClassifier')) {
           await deps.tts.speak('Функция пока недоступна');
           set({ state: 'error', errorMessage: 'Функция пока недоступна' });
           break;
         }
 
-        await deps.tts.speak('Анализирую купюру...');
+        await deps.tts.speak(
+          'Определяю купюру. Поднесите купюру к камере и дважды нажмите на экран для снимка.',
+        );
+        if (isCancelled()) {
+          return;
+        }
 
         if (!deps.banknoteClassifier.isReady()) {
           await deps.banknoteClassifier.initialize();
+          if (isCancelled()) {
+            return;
+          }
         }
 
-        const tensorResultBanknote = await deps.captureFrameTensor(
-          BANKNOTE_INPUT_SIZE,
-          BANKNOTE_INPUT_SIZE,
-        );
-        if (!tensorResultBanknote.ok) {
-          await deps.tts.speak(tensorResultBanknote.userMessage || 'Ошибка камеры');
+        const photoResult = await deps.capturePhoto();
+        if (isCancelled()) {
+          return;
+        }
+        if (!photoResult.ok) {
+          await deps.tts.speak(photoResult.userMessage || 'Ошибка камеры');
           set({
             state: 'error',
-            errorMessage: tensorResultBanknote.userMessage || 'Ошибка камеры',
+            errorMessage: photoResult.userMessage || 'Ошибка камеры',
           });
           break;
         }
 
-        const banknoteResult = await deps.banknoteClassifier.classify(tensorResultBanknote.data!);
+        const banknoteResult = await deps.banknoteClassifier.classify(photoResult.data!);
+        if (isCancelled()) {
+          return;
+        }
         if (banknoteResult.ok) {
           const finalMsg = `Определено: ${banknoteResult.data}`;
           await deps.tts.speak(finalMsg);
@@ -159,16 +229,23 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           set({ state: 'error', errorMessage: banknoteResult.userMessage });
         }
         break;
+      }
 
       case CommandType.Navigate:
         const mockDestination =
             text.replace(/навигация|маршрут|веди/gi, '').trim() || 'Ближайшая аптека';
 
         const navigationResult = await deps.spatialNavigation.buildRoute(mockDestination);
+        if (isCancelled()) {
+          return;
+        }
         if (navigationResult.ok) {
           await deps.tts.speak(
             `Построен маршрут. Направление: ${mockDestination}. Начните движение.`,
           );
+          if (isCancelled()) {
+            return;
+          }
           deps.spatialNavigation.startNavigation(navigationResult.data, instruction => {
             void deps.tts.speak(instruction);
             Logger.info('SpatialNavigation', instruction);
@@ -187,8 +264,11 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
 
       case CommandType.Help:
         const helpStr =
-            'Доступные команды: Прочитай, Опиши, Купюра, Навигация, Помощь, Повтори, Стоп';
+            'Доступные команды: Прочитай, Опиши, Купюра, Навигация, Помощь, Повтори, Стоп, Быстрее, Медленнее, Включи вибрацию, Выключи вибрацию, Русский язык, Английский язык';
         await deps.tts.speak(helpStr);
+        if (isCancelled()) {
+          return;
+        }
         set({
           state: 'success',
           lastResult: helpStr,
@@ -196,6 +276,200 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           lastResultAt: Date.now(),
         });
         break;
+
+      case CommandType.SpeechFaster: {
+        if (!deps.settings.isReady()) {
+          const msg = 'Настройки недоступны';
+          await deps.tts.speak(msg);
+          set({ state: 'error', errorMessage: msg });
+          break;
+        }
+        const settingsState = deps.settings.getState();
+        if (!settingsState) {
+          const msg = 'Настройки недоступны';
+          await deps.tts.speak(msg);
+          set({ state: 'error', errorMessage: msg });
+          break;
+        }
+        const { currentIndex, nextIndex, nextValue } = getNextSpeechStep(
+          settingsState.speechSpeed,
+          'up',
+        );
+        if (nextIndex === currentIndex) {
+          const msg = 'Скорость речи уже максимальная';
+          await deps.tts.speak(msg);
+          if (isCancelled()) {
+            return;
+          }
+          set({
+            state: 'success',
+            lastResult: msg,
+            lastResultType: 'settings',
+            lastResultAt: Date.now(),
+          });
+          break;
+        }
+        if (isCancelled()) {
+          return;
+        }
+        deps.settings.setSpeechSpeed(nextValue);
+        const msg = `Скорость речи увеличена до ${nextValue}x`;
+        await deps.tts.speak(msg);
+        if (isCancelled()) {
+          return;
+        }
+        set({
+          state: 'success',
+          lastResult: msg,
+          lastResultType: 'settings',
+          lastResultAt: Date.now(),
+        });
+        break;
+      }
+
+      case CommandType.SpeechSlower: {
+        if (!deps.settings.isReady()) {
+          const msg = 'Настройки недоступны';
+          await deps.tts.speak(msg);
+          set({ state: 'error', errorMessage: msg });
+          break;
+        }
+        const settingsState = deps.settings.getState();
+        if (!settingsState) {
+          const msg = 'Настройки недоступны';
+          await deps.tts.speak(msg);
+          set({ state: 'error', errorMessage: msg });
+          break;
+        }
+        const { currentIndex, nextIndex, nextValue } = getNextSpeechStep(
+          settingsState.speechSpeed,
+          'down',
+        );
+        if (nextIndex === currentIndex) {
+          const msg = 'Скорость речи уже минимальная';
+          await deps.tts.speak(msg);
+          if (isCancelled()) {
+            return;
+          }
+          set({
+            state: 'success',
+            lastResult: msg,
+            lastResultType: 'settings',
+            lastResultAt: Date.now(),
+          });
+          break;
+        }
+        if (isCancelled()) {
+          return;
+        }
+        deps.settings.setSpeechSpeed(nextValue);
+        const msg = `Скорость речи уменьшена до ${nextValue}x`;
+        await deps.tts.speak(msg);
+        if (isCancelled()) {
+          return;
+        }
+        set({
+          state: 'success',
+          lastResult: msg,
+          lastResultType: 'settings',
+          lastResultAt: Date.now(),
+        });
+        break;
+      }
+
+      case CommandType.VibrationOn: {
+        if (!deps.settings.isReady()) {
+          const msg = 'Настройки недоступны';
+          await deps.tts.speak(msg);
+          set({ state: 'error', errorMessage: msg });
+          break;
+        }
+        if (isCancelled()) {
+          return;
+        }
+        deps.settings.setVibrationEnabled(true);
+        const msg = 'Вибрация включена';
+        await deps.tts.speak(msg);
+        if (isCancelled()) {
+          return;
+        }
+        set({
+          state: 'success',
+          lastResult: msg,
+          lastResultType: 'settings',
+          lastResultAt: Date.now(),
+        });
+        break;
+      }
+
+      case CommandType.VibrationOff: {
+        if (!deps.settings.isReady()) {
+          const msg = 'Настройки недоступны';
+          await deps.tts.speak(msg);
+          set({ state: 'error', errorMessage: msg });
+          break;
+        }
+        if (isCancelled()) {
+          return;
+        }
+        deps.settings.setVibrationEnabled(false);
+        const msg = 'Вибрация выключена';
+        await deps.tts.speak(msg);
+        if (isCancelled()) {
+          return;
+        }
+        set({
+          state: 'success',
+          lastResult: msg,
+          lastResultType: 'settings',
+          lastResultAt: Date.now(),
+        });
+        break;
+      }
+
+      case CommandType.LanguageRu: {
+        if (!deps.settings.isReady()) {
+          const msg = 'Настройки недоступны';
+          await deps.tts.speak(msg);
+          set({ state: 'error', errorMessage: msg });
+          break;
+        }
+        const msg = 'Переключаю язык на русский';
+        await deps.tts.speak(msg);
+        if (isCancelled()) {
+          return;
+        }
+        deps.settings.setLanguage('RU');
+        set({
+          state: 'success',
+          lastResult: msg,
+          lastResultType: 'settings',
+          lastResultAt: Date.now(),
+        });
+        break;
+      }
+
+      case CommandType.LanguageEn: {
+        if (!deps.settings.isReady()) {
+          const msg = 'Настройки недоступны';
+          await deps.tts.speak(msg);
+          set({ state: 'error', errorMessage: msg });
+          break;
+        }
+        const msg = 'Переключаю язык на английский';
+        await deps.tts.speak(msg);
+        if (isCancelled()) {
+          return;
+        }
+        deps.settings.setLanguage('EN');
+        set({
+          state: 'success',
+          lastResult: msg,
+          lastResultType: 'settings',
+          lastResultAt: Date.now(),
+        });
+        break;
+      }
 
       case CommandType.Repeat:
         get().requestRepeat();
@@ -207,6 +481,9 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
 
       case CommandType.Unknown:
         await deps.tts.speak('Не понял, скажите ещё раз');
+        if (isCancelled()) {
+          return;
+        }
         set({ state: 'error', errorMessage: 'Не понял — скажите ещё раз' });
         break;
       }
@@ -222,6 +499,8 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
 
   requestStop: () => {
     const deps = getDependencies();
+    activeRequestId += 1;
+    deps.spatialNavigation.stopNavigation();
     void deps.tts.stop();
     Logger.info('CommandProcessor', 'Остановка по команде');
     set({ state: 'idle' });

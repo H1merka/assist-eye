@@ -13,6 +13,12 @@ export enum CommandType {
   Help = 'help',
   Repeat = 'repeat',
   Stop = 'stop',
+  SpeechFaster = 'speech_faster',
+  SpeechSlower = 'speech_slower',
+  VibrationOn = 'vibration_on',
+  VibrationOff = 'vibration_off',
+  LanguageRu = 'language_ru',
+  LanguageEn = 'language_en',
   Unknown = 'unknown',
 }
 
@@ -27,13 +33,25 @@ export interface Command {
  */
 const COMMAND_PATTERNS: ReadonlyArray<[CommandType, RegExp]> = [
   // NOTE: JS \b плохо работает с кириллицей, поэтому используем простой contains-match.
-  [CommandType.Stop, /(стоп|stop|хватит|enough)/i],
-  [CommandType.Read, /(прочитай|прочти|читай|read|text)/i],
-  [CommandType.Describe, /(опиши|что это|что вижу|describe|what is|what's this)/i],
-  [CommandType.Banknote, /(купюра|деньги|банкнот|banknote|money|bill)/i],
-  [CommandType.Navigate, /(маршрут|навигация|веди|navigate|route)/i],
-  [CommandType.Help, /(помощь|помоги|help)/i],
-  [CommandType.Repeat, /(повтори|repeat|ещё раз|again)/i],
+  [CommandType.Stop, /(стоп|stop|хватит|enough|закончи|прекрати)/i],
+  [CommandType.Read, /(прочитай|прочти|читай|текст|read|text|что тут написано)/i],
+  [
+    CommandType.Describe,
+    /(опиши|что это|что вижу|обстановка|describe|what is|what's this|what do you see)/i,
+  ],
+  [CommandType.Banknote, /(купюра|деньги|банкнот|номинал|banknote|money|bill|cash)/i],
+  [CommandType.Navigate, /(маршрут|навигация|веди|куда идти|route|navigate|navigation)/i],
+  [CommandType.Help, /(помощь|помоги|что ты умеешь|команды|help|commands)/i],
+  [CommandType.Repeat, /(повтори|repeat|ещё раз|again|что ты сказал)/i],
+  [CommandType.SpeechFaster, /(быстрее|ускор(ь|и)|увелич(ь|и) скорость|faster|speed up)/i],
+  [
+    CommandType.SpeechSlower,
+    /(медленнее|медленее|медленей|замедл(и|ить)|уменьш(и|ить) скорость|slower|slow down)/i,
+  ],
+  [CommandType.VibrationOn, /(включи вибраци(ю|я)|vibration on|вибрация включи)/i],
+  [CommandType.VibrationOff, /(выключи вибраци(ю|я)|vibration off|вибрация выключи)/i],
+  [CommandType.LanguageRu, /(русский язык|русский|russian)/i],
+  [CommandType.LanguageEn, /(английский язык|английский|english)/i],
 ];
 
 /**

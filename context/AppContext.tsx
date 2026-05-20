@@ -5,8 +5,14 @@ import { historyRepository, settingsRepository } from '@features/storage/data/da
 import { ttsService } from '@features/tts/data/reactNativeTtsService';
 import { setYandexApiKey as setYandexApiKeyRuntime } from '@features/spatialNavigation/data/yandexSpatialNavigationService';
 import { TTS_RATE_DEFAULT, TTS_RATE_MAX, TTS_RATE_MIN } from '@core/constants/appConstants';
+import { getYandexMapKitApiKey } from '@core/config/env';
+import {
+  AppLanguage,
+  clearAppSettingsBridge,
+  registerAppSettingsBridge,
+} from '@core/settings/appSettingsBridge';
 
-export type Language = 'EN' | 'RU';
+export type Language = AppLanguage;
 export type AppStatus = 'idle' | 'listening' | 'processing' | 'ready';
 
 export interface HistoryItem {
@@ -61,6 +67,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const loadSettings = async () => {
+      const envMapKitKey = getYandexMapKitApiKey();
       const savedLanguage = await settingsRepository.getString(SETTINGS_KEYS.language);
       if (savedLanguage) {
         await i18n.changeLanguage(savedLanguage);
@@ -88,6 +95,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (savedKey) {
         setYandexApiKeyState(savedKey);
         setYandexApiKeyRuntime(savedKey);
+      } else if (envMapKitKey) {
+        setYandexApiKeyState(envMapKitKey);
+        setYandexApiKeyRuntime(envMapKitKey);
       }
     };
 
@@ -105,6 +115,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     void loadSettings();
     void loadHistory();
   }, [i18n]);
+
+  useEffect(() => {
+    registerAppSettingsBridge({
+      getState: () => ({
+        language,
+        speechSpeed,
+        vibrationEnabled,
+      }),
+      setLanguage,
+      setSpeechSpeed,
+      setVibrationEnabled,
+    });
+
+    return () => {
+      clearAppSettingsBridge();
+    };
+  }, [language, speechSpeed, vibrationEnabled]);
 
   useEffect(() => {
     if (processorState === 'processing') setStatus('processing');

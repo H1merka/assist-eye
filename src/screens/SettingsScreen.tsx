@@ -1,10 +1,8 @@
 import React from 'react';
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
   Platform,
@@ -13,16 +11,16 @@ import {
 import { useApp, Language } from '@/context/AppContext';
 import { COLORS } from '@/constants/Colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { SPEECH_RATE_STEPS } from '@core/constants/appConstants';
 
-const SPEED_STEPS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
-const SPEED_LABELS: Record<number, string> = {
-  0.5: '0.5x',
-  0.75: '0.75x',
-  1.0: '1x',
-  1.25: '1.25x',
-  1.5: '1.5x',
-  2.0: '2x',
-};
+const SPEED_STEPS = SPEECH_RATE_STEPS;
+const SPEED_LABELS: Record<number, string> = SPEED_STEPS.reduce(
+  (acc, step) => {
+    acc[step] = `${Number.isInteger(step) ? step : step}x`;
+    return acc;
+  },
+  {} as Record<number, string>,
+);
 
 export default function SettingsScreen() {
   const {
@@ -32,8 +30,6 @@ export default function SettingsScreen() {
     setSpeechSpeed,
     vibrationEnabled,
     setVibrationEnabled,
-    history,
-    clearHistory,
     t,
   } = useApp();
 
@@ -49,20 +45,6 @@ export default function SettingsScreen() {
     if (currentSpeedIndex < SPEED_STEPS.length - 1) {
       setSpeechSpeed(SPEED_STEPS[currentSpeedIndex + 1]);
     }
-  };
-
-  const handleClearHistory = () => {
-    Alert.alert(t('settings.clearHistory'), t('settings.clearHistoryHint'), [
-      {
-        text: t('common.cancel'),
-        style: 'cancel',
-      },
-      {
-        text: t('common.confirm'),
-        style: 'destructive',
-        onPress: clearHistory,
-      },
-    ]);
   };
 
   return (
@@ -169,29 +151,8 @@ export default function SettingsScreen() {
               <View style={[styles.toggleTrack, vibrationEnabled && styles.toggleTrackOn]}>
                 <View style={[styles.toggleThumb, vibrationEnabled && styles.toggleThumbOn]} />
               </View>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-          <TouchableOpacity
-            onPress={handleClearHistory}
-            disabled={history.length === 0}
-            accessibilityLabel={t('settings.clearHistory')}
-            accessibilityHint={t('settings.clearHistoryHint')}
-            accessibilityRole={'button' as AccessibilityRole}
-            accessibilityState={{ disabled: history.length === 0 }}
-            style={[styles.clearButton, history.length === 0 && styles.clearButtonDisabled]}
-          >
-            <Text
-              style={[
-                styles.clearButtonText,
-                history.length === 0 && styles.clearButtonTextDisabled,
-              ]}
-            >
-              {t('settings.clearHistory')}
-            </Text>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -341,24 +302,5 @@ const styles = StyleSheet.create({
   },
   toggleThumbOn: {
     alignSelf: 'flex-end',
-  },
-  clearButton: {
-    height: 52,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.danger,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  clearButtonDisabled: {
-    opacity: 0.5,
-  },
-  clearButtonText: {
-    color: COLORS.danger,
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  clearButtonTextDisabled: {
-    color: COLORS.textMuted,
   },
 });

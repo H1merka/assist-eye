@@ -6,6 +6,7 @@ import { initDatabase } from '@features/storage/data/databaseHelper';
 import RootNavigator from '@navigation/RootNavigator';
 import { CameraHost } from '@features/camera/ui/CameraHost';
 import { COLORS } from '@/constants/Colors';
+import StartupPermissions from '@/components/StartupPermissions';
 
 export default function App() {
   const [ready, setReady] = useState(false);
@@ -47,6 +48,7 @@ export default function App() {
 
   return (
     <AppProvider>
+      <StartupPermissions />
       <CameraHost />
       <RootNavigator />
     </AppProvider>

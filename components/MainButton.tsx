@@ -13,7 +13,8 @@ interface MainButtonProps {
   label: string;
   accessibilityLabel: string;
   accessibilityHint: string;
-  onPress: () => void;
+  onPressIn: () => void;
+  onPressOut: () => void;
   isActive?: boolean;
 }
 
@@ -21,7 +22,8 @@ export default function MainButton({
   label,
   accessibilityLabel,
   accessibilityHint,
-  onPress,
+  onPressIn,
+  onPressOut,
   isActive = false,
 }: MainButtonProps) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -86,9 +88,14 @@ export default function MainButton({
       )}
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
         <Pressable
-          onPress={onPress}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
+          onPressIn={() => {
+            handlePressIn();
+            onPressIn();
+          }}
+          onPressOut={() => {
+            handlePressOut();
+            onPressOut();
+          }}
           accessibilityLabel={accessibilityLabel}
           accessibilityHint={accessibilityHint}
           accessibilityRole={'button' as AccessibilityRole}
