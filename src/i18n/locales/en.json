@@ -1,6 +1,6 @@
 {
   "home": {
-    "screenLabel": "Home screen",
+    "screenLabel": "AssistEye",
     "voiceButton": "Speak",
     "voiceButtonA11y": "Press and speak a command",
     "voiceButtonHint": "Activate voice recognition to give a command",
@@ -17,7 +17,7 @@
     "capturePrompt": "Double tap the screen to take a photo"
   },
   "settings": {
-    "screenLabel": "Settings screen",
+    "screenLabel": "Settings",
     "language": "Language",
     "languageHint": "Switch app language",
     "voice": "Voice",

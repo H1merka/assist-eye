@@ -48,10 +48,19 @@ export default function convertFrameToTensor(frame: any, width: number, height: 
     const cropX = Math.max(0, Math.floor((srcW - cropW) / 2));
     const cropY = Math.max(0, Math.floor((srcH - cropH) / 2));
 
+    const xMap = new Int32Array(width);
+    const yMap = new Int32Array(height);
+    for (let x = 0; x < width; x++) {
+      xMap[x] = cropX + Math.floor((x * cropW) / width);
+    }
     for (let y = 0; y < height; y++) {
-      const syPos = cropY + Math.floor((y * cropH) / height);
+      yMap[y] = cropY + Math.floor((y * cropH) / height);
+    }
+
+    for (let y = 0; y < height; y++) {
+      const syPos = yMap[y];
       for (let x = 0; x < width; x++) {
-        const sxPos = cropX + Math.floor((x * cropW) / width);
+        const sxPos = xMap[x];
         const srcIdx = (syPos * srcW + sxPos) * bytesPerPixel;
         const dstIdx = (y * width + x) * 3;
         out[dstIdx] = bytes[srcIdx];

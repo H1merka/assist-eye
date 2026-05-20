@@ -1,6 +1,6 @@
 {
   "home": {
-    "screenLabel": "Главный экран",
+    "screenLabel": "AssistEye",
     "voiceButton": "Говорите",
     "voiceButtonA11y": "Нажмите и произнесите команду",
     "voiceButtonHint": "Активировать распознавание речи для голосовой команды",
@@ -17,7 +17,7 @@
     "capturePrompt": "Дважды нажмите на экран для снимка"
   },
   "settings": {
-    "screenLabel": "Экран настроек",
+    "screenLabel": "Настройки",
     "language": "Язык",
     "languageHint": "Сменить язык интерфейса",
     "voice": "Голос",

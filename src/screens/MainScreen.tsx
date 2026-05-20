@@ -229,6 +229,7 @@ const styles = StyleSheet.create({
   },
   captureOverlay: {
     ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'transparent',
     zIndex: 3,
   },
   captureHint: {

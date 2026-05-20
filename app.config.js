@@ -1,9 +1,14 @@
 module.exports = ({ config }) => {
   return {
     ...config,
+    icon: './assets/images/icon.png',
     android: {
       ...config.android,
       minSdk: 26,
+      adaptiveIcon: {
+        foregroundImage: './assets/images/icon.png',
+        backgroundColor: '#000000',
+      },
     },
     extra: {
       ...config.extra,

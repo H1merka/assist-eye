@@ -111,8 +111,10 @@ export function CameraHost() {
         device={device}
         isActive={isActive}
         photo={true}
+        video={true}
         pixelFormat="rgb"
         frameProcessor={frameProcessor}
+        frameProcessorFps={5}
       />
     </View>
   );

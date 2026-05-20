@@ -4,8 +4,14 @@ import { Logger } from '@core/utils/logger';
 import { isFeatureEnabled } from '@core/config/featureFlags';
 import { CommandProcessorDependencies } from '../domain/commandProcessorDependencies';
 import { createDefaultDependencies } from '../data/commandProcessorDependencyFactory';
-import { BANKNOTE_INPUT_SIZE, SPEECH_RATE_STEPS, YOLO_INPUT_SIZE } from '@core/constants/appConstants';
+import {
+  BANKNOTE_INPUT_SIZE,
+  PROCESSING_FEEDBACK_DELAY_MS,
+  SPEECH_RATE_STEPS,
+  YOLO_INPUT_SIZE,
+} from '@core/constants/appConstants';
 import i18n from '@i18n/i18n';
+import { AudioFeedback } from '@core/utils/audio';
 import {
   BANKNOTE_LOW_CONFIDENCE,
   CAMERA_INIT_FAILED,
@@ -55,6 +61,9 @@ const ERROR_CODE_TO_I18N_KEY: Record<string, string> = {
 const t = (key: string, options?: Record<string, unknown>) => i18n.t(key, options);
 
 function resolveErrorMessage(errorCode?: string, fallback?: string): string {
+  if (errorCode === NAVIGATION_ROUTE_FAILED && fallback) {
+    return fallback;
+  }
   if (errorCode && ERROR_CODE_TO_I18N_KEY[errorCode]) {
     return t(ERROR_CODE_TO_I18N_KEY[errorCode]);
   }
@@ -97,6 +106,34 @@ function getDependencies(): CommandProcessorDependencies {
   return dependenciesInstance;
 }
 
+function createProcessingLoop() {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let isPlaying = false;
+
+  const schedule = () => {
+    if (timeoutId || isPlaying) {
+      return;
+    }
+    timeoutId = setTimeout(() => {
+      isPlaying = true;
+      AudioFeedback.playLoop('processing');
+    }, PROCESSING_FEEDBACK_DELAY_MS);
+  };
+
+  const stop = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+    if (isPlaying) {
+      AudioFeedback.stop('processing');
+      isPlaying = false;
+    }
+  };
+
+  return { schedule, stop };
+}
+
 /**
  * For testing: inject custom dependencies.
  * @internal
@@ -118,6 +155,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
     const requestId = activeRequestId + 1;
     activeRequestId = requestId;
     const isCancelled = () => requestId !== activeRequestId;
+    const processingLoop = createProcessingLoop();
     Logger.info('CommandProcessor', `Команда: ${command.type}`, { raw: text });
 
     set({ state: 'processing', errorMessage: null });
@@ -144,7 +182,9 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
             break;
           }
 
+          processingLoop.schedule();
           const ocrResult = await deps.ocr.recognize(photoResult.data!);
+          processingLoop.stop();
           if (isCancelled()) {
             return;
           }
@@ -190,7 +230,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
         const frameResult = await deps.captureFrameTensor(
           YOLO_INPUT_SIZE,
           YOLO_INPUT_SIZE,
-          6000,
+          12000,
         );
         if (isCancelled()) {
           return;
@@ -202,7 +242,9 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           break;
         }
 
+        processingLoop.schedule();
         const detectResult = await deps.objectDetector.detect(frameResult.data!);
+        processingLoop.stop();
         if (isCancelled()) {
           return;
         }
@@ -269,7 +311,9 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           break;
         }
 
+        processingLoop.schedule();
         const banknoteResult = await deps.banknoteClassifier.classify(frameResult.data!);
+        processingLoop.stop();
         if (isCancelled()) {
           return;
         }
@@ -297,7 +341,9 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
         const mockDestination =
             text.replace(/навигация|маршрут|веди/gi, '').trim() || t('voice.defaultDestination');
 
+        processingLoop.schedule();
         const navigationResult = await deps.spatialNavigation.buildRoute(mockDestination);
+        processingLoop.stop();
         if (isCancelled()) {
           return;
         }
@@ -552,11 +598,14 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
       }
     } catch (error) {
       Logger.error('CommandProcessor', 'Необработанная ошибка', error);
+      processingLoop.stop();
       await deps.tts.speak(t('errors.generic'));
       set({
         state: 'error',
         errorMessage: t('errors.generic'),
       });
+    } finally {
+      processingLoop.stop();
     }
   },
 
@@ -564,6 +613,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
     const deps = getDependencies();
     activeRequestId += 1;
     deps.spatialNavigation.stopNavigation();
+    AudioFeedback.stop('processing');
     void deps.tts.stop();
     Logger.info('CommandProcessor', 'Остановка по команде');
     set({ state: 'idle' });
