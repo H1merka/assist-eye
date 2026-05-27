@@ -31,7 +31,7 @@ export function CameraHost() {
     new Map<
       number,
       {
-        resolve: (tensor: Uint8Array) => void;
+        resolve: (tensor: ArrayLike<number>) => void;
         reject: (error: Error) => void;
         timeoutId: ReturnType<typeof setTimeout>;
       }
@@ -39,7 +39,7 @@ export function CameraHost() {
   );
   const tensorRequest = useSharedValue<FrameTensorRequest | null>(null);
 
-  const handleFrameTensor = useRunOnJS((tensor: Uint8Array, requestId: number) => {
+  const handleFrameTensor = useRunOnJS((tensor: ArrayLike<number>, requestId: number) => {
     const pending = pendingRequests.current.get(requestId);
     if (!pending) {
       return;
@@ -74,7 +74,7 @@ export function CameraHost() {
       },
     });
     registerFrameTensorRequester((width, height, timeoutMs = 2000) => {
-      return new Promise<Uint8Array>((resolve, reject) => {
+      return new Promise<ArrayLike<number>>((resolve, reject) => {
         const id = requestIdRef.current + 1;
         requestIdRef.current = id;
         const timeoutId = setTimeout(() => {

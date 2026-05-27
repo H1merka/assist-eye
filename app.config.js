@@ -13,6 +13,8 @@ module.exports = ({ config }) => {
     extra: {
       ...config.extra,
       mapKitApiKey: process.env.EXPO_PUBLIC_YANDEX_MAPKIT_API_KEY,
+      yandexRoutingApiKey: process.env.EXPO_PUBLIC_YANDEX_ROUTING_API_KEY,
+      yandexGeocoderApiKey: process.env.EXPO_PUBLIC_YANDEX_GEOCODER_API_KEY,
     },
     plugins: [
       ...(config.plugins || []),

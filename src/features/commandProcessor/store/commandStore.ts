@@ -283,6 +283,8 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           return;
         }
 
+          Logger.info('CommandProcessor', 'Banknote: requesting frame tensor');
+
         if (!deps.banknoteClassifier.isReady()) {
           const initResult = await deps.banknoteClassifier.initialize();
           if (isCancelled()) {
@@ -301,6 +303,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           BANKNOTE_INPUT_SIZE,
           4000,
         );
+        Logger.info('CommandProcessor', 'Banknote: frameResult', { ok: frameResult.ok, length: frameResult.data ? frameResult.data.length : 0 });
         if (isCancelled()) {
           return;
         }
@@ -313,6 +316,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
 
         processingLoop.schedule();
         const banknoteResult = await deps.banknoteClassifier.classify(frameResult.data!);
+        Logger.info('CommandProcessor', 'Banknote: classifier returned', banknoteResult.ok ? { ok: true } : { ok: false, errorCode: banknoteResult.errorCode });
         processingLoop.stop();
         if (isCancelled()) {
           return;
@@ -342,7 +346,9 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
             text.replace(/навигация|маршрут|веди/gi, '').trim() || t('voice.defaultDestination');
 
         processingLoop.schedule();
+        Logger.info('CommandProcessor', 'Navigate: building route', { destination: mockDestination });
         const navigationResult = await deps.spatialNavigation.buildRoute(mockDestination);
+        Logger.info('CommandProcessor', 'Navigate: buildRoute result', navigationResult.ok ? { ok: true } : { ok: false, errorCode: navigationResult.errorCode });
         processingLoop.stop();
         if (isCancelled()) {
           return;

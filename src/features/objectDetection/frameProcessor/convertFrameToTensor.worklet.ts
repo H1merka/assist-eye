@@ -14,26 +14,56 @@ export default function convertFrameToTensor(frame: any, width: number, height: 
   // Output is Uint8Array of length width*height*3 (RGB).
   const out = new Uint8Array(width * height * 3);
   if (!srcW || !srcH) {
-    return out;
+    const outArray = new Array(out.length);
+    for (let i = 0; i < out.length; i++) {
+      outArray[i] = out[i];
+    }
+    return outArray;
   }
 
   try {
     let bytes: Uint8Array | null = null;
     if (typeof frame.toArrayBuffer === 'function') {
       const buffer = frame.toArrayBuffer();
-      bytes = new Uint8Array(buffer);
-    } else if (frame.bytes || frame.data) {
-      bytes = frame.bytes || frame.data;
+      if (buffer) {
+        bytes = new Uint8Array(buffer);
+      }
+    } else if (frame?.bytes) {
+      if (frame.bytes instanceof Uint8Array) {
+        bytes = frame.bytes;
+      } else if (frame.bytes instanceof ArrayBuffer) {
+        bytes = new Uint8Array(frame.bytes);
+      } else if (ArrayBuffer.isView(frame.bytes)) {
+        const view = frame.bytes as ArrayBufferView;
+        bytes = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
+      }
+    } else if (frame?.data) {
+      if (frame.data instanceof Uint8Array) {
+        bytes = frame.data;
+      } else if (frame.data instanceof ArrayBuffer) {
+        bytes = new Uint8Array(frame.data);
+      } else if (ArrayBuffer.isView(frame.data)) {
+        const view = frame.data as ArrayBufferView;
+        bytes = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
+      }
     }
 
     if (!bytes) {
-      return out;
+      const outArray = new Array(out.length);
+      for (let i = 0; i < out.length; i++) {
+        outArray[i] = out[i];
+      }
+      return outArray;
     }
 
     const pixelCount = srcW * srcH;
     const bytesPerPixel = Math.floor(bytes.length / pixelCount);
     if (bytesPerPixel < 3) {
-      return out;
+      const outArray = new Array(out.length);
+      for (let i = 0; i < out.length; i++) {
+        outArray[i] = out[i];
+      }
+      return outArray;
     }
 
     const targetRatio = width / height;
@@ -72,5 +102,9 @@ export default function convertFrameToTensor(frame: any, width: number, height: 
     // Worklets don't support console in some environments; swallow errors.
   }
 
-  return out;
+  const outArray = new Array(out.length);
+  for (let i = 0; i < out.length; i++) {
+    outArray[i] = out[i];
+  }
+  return outArray;
 }
