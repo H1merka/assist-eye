@@ -106,6 +106,14 @@ function getDependencies(): CommandProcessorDependencies {
   return dependenciesInstance;
 }
 
+function createBanknoteSessionId(): string {
+  const ts = Date.now().toString(36);
+  const random = Math.floor(Math.random() * 0xffffff)
+    .toString(36)
+    .padStart(5, '0');
+  return `banknote-${ts}-${random}`;
+}
+
 function createProcessingLoop() {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   let isPlaying = false;
@@ -231,6 +239,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           YOLO_INPUT_SIZE,
           YOLO_INPUT_SIZE,
           12000,
+          { source: 'describe' },
         );
         if (isCancelled()) {
           return;
@@ -271,6 +280,9 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
       }
 
       case CommandType.Banknote: {
+        const banknoteSessionId = createBanknoteSessionId();
+        const banknoteStartedAt = Date.now();
+
         if (!isFeatureEnabled('banknoteClassifier')) {
           const message = t('errors.featureDisabled');
           await deps.tts.speak(message);
@@ -283,7 +295,13 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           return;
         }
 
-          Logger.info('CommandProcessor', 'Banknote: requesting frame tensor');
+        Logger.info('CommandProcessor', 'Banknote session started', {
+          sessionId: banknoteSessionId,
+        });
+        Logger.info('CommandProcessor', 'Banknote: requesting frame tensor', {
+          sessionId: banknoteSessionId,
+          expectedLength: BANKNOTE_INPUT_SIZE * BANKNOTE_INPUT_SIZE * 3,
+        });
 
         if (!deps.banknoteClassifier.isReady()) {
           const initResult = await deps.banknoteClassifier.initialize();
@@ -302,8 +320,14 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
           BANKNOTE_INPUT_SIZE,
           BANKNOTE_INPUT_SIZE,
           4000,
+          { sessionId: banknoteSessionId, source: 'banknote' },
         );
-        Logger.info('CommandProcessor', 'Banknote: frameResult', { ok: frameResult.ok, length: frameResult.data ? frameResult.data.length : 0 });
+        Logger.info('CommandProcessor', 'Banknote: frameResult', {
+          sessionId: banknoteSessionId,
+          ok: frameResult.ok,
+          length: frameResult.data ? frameResult.data.length : 0,
+          elapsedMs: Date.now() - banknoteStartedAt,
+        });
         if (isCancelled()) {
           return;
         }
@@ -316,7 +340,22 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
 
         processingLoop.schedule();
         const banknoteResult = await deps.banknoteClassifier.classify(frameResult.data!);
-        Logger.info('CommandProcessor', 'Banknote: classifier returned', banknoteResult.ok ? { ok: true } : { ok: false, errorCode: banknoteResult.errorCode });
+        Logger.info(
+          'CommandProcessor',
+          'Banknote: classifier returned',
+          banknoteResult.ok
+            ? {
+              sessionId: banknoteSessionId,
+              ok: true,
+              elapsedMs: Date.now() - banknoteStartedAt,
+            }
+            : {
+              sessionId: banknoteSessionId,
+              ok: false,
+              errorCode: banknoteResult.errorCode,
+              elapsedMs: Date.now() - banknoteStartedAt,
+            },
+        );
         processingLoop.stop();
         if (isCancelled()) {
           return;

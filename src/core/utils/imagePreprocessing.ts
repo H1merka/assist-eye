@@ -14,8 +14,11 @@ import {
   YOLO_INPUT_SIZE,
 } from '@core/constants/appConstants';
 import ImageResizer from '@bam.tech/react-native-image-resizer';
+import { Buffer } from 'buffer';
 import { Logger } from '@core/utils/logger';
 import { Image } from 'react-native';
+import * as jpeg from 'jpeg-js';
+import RNFS from 'react-native-fs';
 
 export interface ImageSize {
   width: number;
@@ -153,15 +156,51 @@ export async function convertImageToRGBATensor(
   height: number = YOLO_INPUT_SIZE,
 ): Promise<Uint8Array> {
   try {
-    await resizeSquare(uri, Math.max(width, height));
+    const resizedUri = await resizeSquare(uri, Math.max(width, height));
+    const filePath = resizedUri.startsWith('file://') ? resizedUri.slice('file://'.length) : resizedUri;
+    const base64 = await RNFS.readFile(filePath, 'base64');
+    const jpegBuffer = Buffer.from(base64, 'base64');
+    const decoded = jpeg.decode(jpegBuffer, { useTArray: true });
 
-    // Proper decoding of JPEG -> raw pixels requires native support.
-    // Placeholder: create zeroed RGB buffer of requested size.
-    return new Uint8Array(width * height * 3);
+    if (!decoded?.data || decoded.width <= 0 || decoded.height <= 0) {
+      throw new Error('Decoded image is empty');
+    }
+
+    return convertRgbaBufferToRgbTensor(decoded.data, decoded.width, decoded.height, width, height);
   } catch (e) {
     Logger.error('ImagePreprocessing', 'convertImageToRGBATensor failed', e);
     return new Uint8Array(width * height * 3);
   }
+}
+
+function convertRgbaBufferToRgbTensor(
+  rgba: Uint8Array,
+  sourceWidth: number,
+  sourceHeight: number,
+  targetWidth: number,
+  targetHeight: number,
+): Uint8Array {
+  const output = new Uint8Array(targetWidth * targetHeight * 3);
+  if (sourceWidth <= 0 || sourceHeight <= 0) {
+    return output;
+  }
+
+  const xRatio = sourceWidth / targetWidth;
+  const yRatio = sourceHeight / targetHeight;
+
+  for (let y = 0; y < targetHeight; y++) {
+    const sourceY = Math.min(sourceHeight - 1, Math.floor(y * yRatio));
+    for (let x = 0; x < targetWidth; x++) {
+      const sourceX = Math.min(sourceWidth - 1, Math.floor(x * xRatio));
+      const sourceIndex = (sourceY * sourceWidth + sourceX) * 4;
+      const targetIndex = (y * targetWidth + x) * 3;
+      output[targetIndex] = rgba[sourceIndex];
+      output[targetIndex + 1] = rgba[sourceIndex + 1];
+      output[targetIndex + 2] = rgba[sourceIndex + 2];
+    }
+  }
+
+  return output;
 }
 
 /**

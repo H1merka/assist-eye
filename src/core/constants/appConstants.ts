@@ -12,7 +12,7 @@ export const CONFIDENCE_THRESHOLD_DEFAULT = 0.45;
 export const CONFIDENCE_THRESHOLD_SAFETY = 0.35;
 
 /** Минимальный confidence для классификации купюр */
-export const CONFIDENCE_THRESHOLD_BANKNOTE = 0.6;
+export const CONFIDENCE_THRESHOLD_BANKNOTE = 0.3;
 
 /** Минимальный confidence OCR-блока для озвучивания */
 export const CONFIDENCE_THRESHOLD_OCR = 0.4;

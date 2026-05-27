@@ -21,6 +21,11 @@ export interface SettingsController {
   setVibrationEnabled: (enabled: boolean) => void;
 }
 
+export interface FrameTensorCaptureTrace {
+  sessionId?: string;
+  source?: string;
+}
+
 /**
  * Service container for command processing.
  * Inject real implementations in production, mocks in tests.
@@ -44,6 +49,7 @@ export interface CommandProcessorDependencies {
     width: number,
     height: number,
     timeoutMs?: number,
+    trace?: FrameTensorCaptureTrace,
   ) => Promise<{ok: boolean; data?: Uint8Array; userMessage?: string; errorCode?: string}>;
   /**
    * Camera photo capture function.
