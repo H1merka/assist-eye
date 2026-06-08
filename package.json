@@ -4,7 +4,7 @@
   "private": true,
   "description": "Мобильное приложение для помощи слабовидящим и незрячим — голосовое управление, OCR, детекция объектов, определение купюр. Полностью офлайн.",
   "scripts": {
-    "android": "expo run:android",
+    "android": "node scripts/copy-vosk-models.js && expo run:android",
     "expo": "expo start",
     "prebuild": "expo prebuild",
     "eas:build:ios": "eas build --platform ios",

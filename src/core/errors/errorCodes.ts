@@ -10,6 +10,8 @@
 export const CAMERA_BUSY = 'CAMERA_BUSY';
 export const CAMERA_PERMISSION_DENIED = 'CAMERA_PERMISSION_DENIED';
 export const CAMERA_INIT_FAILED = 'CAMERA_INIT_FAILED';
+export const CAPTURE_TIMEOUT = 'CAPTURE_TIMEOUT';
+export const CAPTURE_FAILED = 'CAPTURE_FAILED';
 
 // ---------- ASR ----------
 export const ASR_TIMEOUT = 'ASR_TIMEOUT';

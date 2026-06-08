@@ -8,6 +8,7 @@ import {
   AccessibilityRole,
 } from 'react-native';
 import { COLORS } from '@/constants/Colors';
+import { LAYOUT } from '@/constants/Layout';
 
 interface MainButtonProps {
   label: string;
@@ -115,20 +116,20 @@ export default function MainButton({
   );
 }
 
-const BUTTON_SIZE = 200;
+const BUTTON_SIZE = LAYOUT.mainButton.size;
 
 const styles = StyleSheet.create({
   wrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: BUTTON_SIZE + 80,
-    height: BUTTON_SIZE + 80,
+    width: BUTTON_SIZE + LAYOUT.mainButton.ring,
+    height: BUTTON_SIZE + LAYOUT.mainButton.ring,
   },
   ring: {
     position: 'absolute',
-    width: BUTTON_SIZE + 60,
-    height: BUTTON_SIZE + 60,
-    borderRadius: (BUTTON_SIZE + 60) / 2,
+    width: BUTTON_SIZE + 72,
+    height: BUTTON_SIZE + 72,
+    borderRadius: (BUTTON_SIZE + 72) / 2,
     backgroundColor: COLORS.accent,
   },
   button: {
@@ -151,10 +152,12 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   label: {
-    fontSize: 32,
+    fontSize: LAYOUT.font.button,
     fontWeight: '700',
     color: COLORS.buttonText,
     letterSpacing: 1,
+    textAlign: 'center',
+    paddingHorizontal: 12,
   },
   labelActive: {
     color: COLORS.buttonText,

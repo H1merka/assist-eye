@@ -1,4 +1,9 @@
 pluginManagement {
+  repositories {
+    maven { url("https://maven.google.com") }
+    google()
+    mavenCentral()
+  }
   def reactNativeGradlePlugin = new File(
     providers.exec {
       workingDir(rootDir)
@@ -31,7 +36,7 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
 }
 expoAutolinking.useExpoModules()
 
-rootProject.name = 'Assist Eye'
+rootProject.name = 'AssistEye'
 
 expoAutolinking.useExpoVersionCatalog()
 

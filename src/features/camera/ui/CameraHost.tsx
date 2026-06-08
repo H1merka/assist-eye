@@ -15,7 +15,10 @@ import {
   registerFrameTensorRequester,
   setCameraPermission,
   setCameraRef,
+  notifyCameraInitialized,
+  notifyCameraStopped,
 } from '@features/camera/data/cameraService';
+import { ensureCameraPermission, refreshCameraPermission } from '@features/camera/data/cameraPermissions';
 
 type FrameTensorRequest = {
   id: number;
@@ -171,12 +174,18 @@ export function CameraHost(): React.JSX.Element | null {
   }, []);
 
   useEffect(() => {
-    setCameraPermission(!!hasPermission);
+    refreshCameraPermission();
+    if (!hasPermission) {
+      void ensureCameraPermission();
+    }
   }, [hasPermission]);
 
   useEffect(() => {
     if (isActive && cameraRef.current) {
       setCameraRef(cameraRef as React.RefObject<Camera>);
+    }
+    if (!isActive) {
+      notifyCameraStopped();
     }
   }, [isActive]);
 
@@ -195,7 +204,14 @@ export function CameraHost(): React.JSX.Element | null {
         video={true}
         pixelFormat="rgb"
         frameProcessor={frameProcessor}
-        frameProcessorFps={5}
+        onInitialized={() => {
+          setCameraRef(cameraRef as React.RefObject<Camera>);
+          notifyCameraInitialized();
+        }}
+        onError={error => {
+          Logger.error('CameraHost', 'Camera error', error);
+          notifyCameraStopped();
+        }}
       />
     </View>
   );
@@ -205,6 +221,8 @@ const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#000',
+    zIndex: 1,
+    elevation: 1,
   },
   camera: {
     ...StyleSheet.absoluteFillObject,

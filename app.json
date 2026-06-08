@@ -10,7 +10,10 @@
     ],
     "ios": {
       "bundleIdentifier": "com.example.assisteye",
-      "buildNumber": "1.0.0"
+      "buildNumber": "1.0.0",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.example.assisteye",
@@ -21,7 +24,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": ""
+        "projectId": "ae4189b4-f31a-44c2-bafb-4817bdb43644"
       }
     }
   }

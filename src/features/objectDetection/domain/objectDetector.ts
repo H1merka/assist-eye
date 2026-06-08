@@ -11,7 +11,7 @@ export interface ObjectDetector {
    * @param imageInput — путь к файлу или готовый RGB-тензор
    * @returns список обнаруженных объектов (уже после NMS и фильтрации)
    */
-  detect(imageInput: string | Uint8Array): Promise<Result<DetectionResult[]>>;
+  detect(imageInput: string | Uint8Array | ArrayLike<number>): Promise<Result<DetectionResult[]>>;
 
   /** Загрузить модель в память (lazy init) */
   initialize(): Promise<Result<void>>;

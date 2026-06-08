@@ -14,7 +14,8 @@
     "listening": "Listening…",
     "processing": "Processing…",
     "error": "An error occurred",
-    "capturePrompt": "Double tap the screen to take a photo"
+    "capturePrompt": "Double tap the screen to take a photo",
+    "readCameraPrompt": "Point the camera at the text"
   },
   "settings": {
     "screenLabel": "Settings",
@@ -82,7 +83,7 @@
   },
   "errors": {
     "notUnderstood": "Didn't understand — say again",
-    "cameraPermission": "Camera permission is required. Please enable it in settings.",
+    "cameraPermission": "Camera access is required. Open Settings → Apps → AssistEye → Permissions → Camera.",
     "micPermission": "Microphone permission is required. Please enable it in settings.",
     "modelNotLoaded": "Download a language pack first. Connect to the internet and try again.",
     "cameraBusy": "Camera is being used by another app — close it and try again.",
@@ -93,6 +94,10 @@
     "navigationApiKeyMissing": "Yandex Maps API key is required.",
     "navigationOffline": "Internet connection is required for navigation.",
     "navigationRouteFailed": "Route could not be built.",
+    "cameraInitFailed": "Camera failed to start — please try again.",
+    "captureTimeout": "No photo taken. Double tap the screen quickly.",
+    "captureFailed": "Failed to take a photo — please try again.",
+    "ocrFailed": "Could not read the text — please try again.",
     "generic": "An error occurred — try again."
   }
 }

@@ -3,6 +3,7 @@ import { FlatList, Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '@/context/AppContext';
 import { COLORS } from '@/constants/Colors';
+import { LAYOUT } from '@/constants/Layout';
 import HistoryItem from '@/components/HistoryItem';
 import EmptyState from '@/components/EmptyState';
 
@@ -43,15 +44,16 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: Platform.OS === 'android' ? 32 : 16,
-    paddingBottom: 16,
+    paddingHorizontal: LAYOUT.spacing.screen,
+    paddingTop: Platform.OS === 'android' ? 36 : 20,
+    paddingBottom: 20,
   },
   title: {
-    fontSize: 30,
+    fontSize: LAYOUT.font.title,
     fontWeight: '800',
     color: COLORS.textPrimary,
-    marginBottom: 20,
+    marginBottom: 24,
+    lineHeight: LAYOUT.lineHeight.title,
     letterSpacing: 0.4,
   },
   listContent: {

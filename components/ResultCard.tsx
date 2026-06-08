@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { COLORS } from '@/constants/Colors';
+import { LAYOUT } from '@/constants/Layout';
 
 interface ResultCardProps {
   resultText: string;
@@ -50,17 +51,17 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     backgroundColor: COLORS.surface,
-    borderRadius: 16,
+    borderRadius: LAYOUT.radius.card,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: 20,
+    padding: LAYOUT.spacing.screen,
   },
   resultText: {
     color: COLORS.textPrimary,
-    fontSize: 22,
+    fontSize: LAYOUT.font.heading,
     fontWeight: '700',
-    lineHeight: 30,
-    marginBottom: 16,
+    lineHeight: LAYOUT.lineHeight.heading,
+    marginBottom: 20,
   },
   actions: {
     flexDirection: 'row',
@@ -68,16 +69,16 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     flex: 1,
-    height: 52,
-    borderRadius: 12,
+    minHeight: LAYOUT.touch.button,
+    borderRadius: LAYOUT.radius.button,
     backgroundColor: COLORS.accent,
     justifyContent: 'center',
     alignItems: 'center',
   },
   secondaryButton: {
     flex: 1,
-    height: 52,
-    borderRadius: 12,
+    minHeight: LAYOUT.touch.button,
+    borderRadius: LAYOUT.radius.button,
     borderWidth: 1,
     borderColor: COLORS.border,
     backgroundColor: COLORS.surfaceElevated,
@@ -86,12 +87,12 @@ const styles = StyleSheet.create({
   },
   primaryText: {
     color: COLORS.buttonText,
-    fontSize: 17,
+    fontSize: LAYOUT.font.bodySmall,
     fontWeight: '700',
   },
   secondaryText: {
     color: COLORS.textPrimary,
-    fontSize: 17,
+    fontSize: LAYOUT.font.bodySmall,
     fontWeight: '700',
   },
   buttonPressed: {

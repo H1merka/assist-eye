@@ -12,10 +12,13 @@ import {
 } from '@core/constants/appConstants';
 import i18n from '@i18n/i18n';
 import { AudioFeedback } from '@core/utils/audio';
+import { setCameraActive } from '@features/camera/data/cameraService';
 import {
   BANKNOTE_LOW_CONFIDENCE,
   CAMERA_INIT_FAILED,
   CAMERA_PERMISSION_DENIED,
+  CAPTURE_FAILED,
+  CAPTURE_TIMEOUT,
   DETECTION_MODEL_FAILED,
   DETECTION_MODEL_NOT_LOADED,
   DETECTION_NO_OBJECTS,
@@ -45,11 +48,13 @@ let activeRequestId = 0;
 
 const ERROR_CODE_TO_I18N_KEY: Record<string, string> = {
   [CAMERA_PERMISSION_DENIED]: 'errors.cameraPermission',
-  [CAMERA_INIT_FAILED]: 'errors.generic',
+  [CAMERA_INIT_FAILED]: 'errors.cameraInitFailed',
+  [CAPTURE_TIMEOUT]: 'errors.captureTimeout',
+  [CAPTURE_FAILED]: 'errors.captureFailed',
   [OCR_NO_TEXT]: 'errors.noText',
-  [OCR_PROCESSING_FAILED]: 'errors.generic',
+  [OCR_PROCESSING_FAILED]: 'errors.ocrFailed',
   [DETECTION_NO_OBJECTS]: 'errors.noObjects',
-  [DETECTION_MODEL_FAILED]: 'errors.generic',
+  [DETECTION_MODEL_FAILED]: 'errors.modelNotLoaded',
   [DETECTION_MODEL_NOT_LOADED]: 'errors.modelNotLoaded',
   [BANKNOTE_LOW_CONFIDENCE]: 'errors.banknoteLowConfidence',
   [NAVIGATION_API_KEY_MISSING]: 'errors.navigationApiKeyMissing',
@@ -174,6 +179,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
         if (!isFeatureEnabled('onboarding')) {
           // Note: 'Read' doesn't require feature flag, it's core functionality
         }
+        setCameraActive(true);
         await deps.tts.speak(t('voice.readPrompt'));
         if (isCancelled()) {
           return;
@@ -184,6 +190,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
             return;
           }
           if (!photoResult.ok) {
+            setCameraActive(false);
             const message = resolveErrorMessage(photoResult.errorCode, photoResult.userMessage);
             await deps.tts.speak(message);
             set({ state: 'error', errorMessage: message });
@@ -217,6 +224,7 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
         break;
 
       case CommandType.Describe: {
+        setCameraActive(true);
         await deps.tts.speak(t('voice.describePrompt'));
         if (isCancelled()) {
           return;
@@ -294,6 +302,8 @@ export const useCommandProcessor = create<CommandProcessorState>((set, get) => (
         if (isCancelled()) {
           return;
         }
+
+        setCameraActive(true);
 
         Logger.info('CommandProcessor', 'Banknote session started', {
           sessionId: banknoteSessionId,

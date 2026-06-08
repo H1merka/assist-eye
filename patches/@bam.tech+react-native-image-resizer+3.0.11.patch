@@ -1,0 +1,12 @@
+diff --git a/node_modules/@bam.tech/react-native-image-resizer/android/build.gradle b/node_modules/@bam.tech/react-native-image-resizer/android/build.gradle
+index 876b08a..faaa1b8 100644
+--- a/node_modules/@bam.tech/react-native-image-resizer/android/build.gradle
++++ b/node_modules/@bam.tech/react-native-image-resizer/android/build.gradle
+@@ -32,6 +32,7 @@ def getExtOrIntegerDefault(name) {
+ }
+ 
+ android {
++  buildToolsVersion getExtOrDefault("buildToolsVersion")
+   compileSdkVersion getExtOrIntegerDefault("compileSdkVersion")
+   def agpVersion = com.android.Version.ANDROID_GRADLE_PLUGIN_VERSION
+   def agpMajorVersion = agpVersion.tokenize('.')[0].toInteger()

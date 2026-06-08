@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useApp, Language } from '@/context/AppContext';
 import { COLORS } from '@/constants/Colors';
+import { LAYOUT } from '@/constants/Layout';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SPEECH_RATE_STEPS } from '@core/constants/appConstants';
 
@@ -168,37 +169,46 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 24,
-    paddingTop: Platform.OS === 'android' ? 32 : 16,
-    paddingBottom: 40,
+    paddingHorizontal: LAYOUT.spacing.screen,
+    paddingTop: Platform.OS === 'android' ? 40 : 24,
+    paddingBottom: 56,
   },
   screenTitle: {
-    fontSize: 30,
+    fontSize: LAYOUT.font.title + 4,
     fontWeight: '800',
     color: COLORS.textPrimary,
-    marginBottom: 32,
+    marginBottom: LAYOUT.spacing.section + 8,
+    lineHeight: LAYOUT.lineHeight.title + 6,
     letterSpacing: 0.3,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: LAYOUT.spacing.section + 8,
+    backgroundColor: COLORS.surface,
+    borderRadius: LAYOUT.radius.card,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: LAYOUT.settings.cardPadding,
   },
   sectionLabel: {
-    fontSize: 18,
+    fontSize: LAYOUT.font.settingsSection,
     fontWeight: '700',
     color: COLORS.textPrimary,
-    marginBottom: 12,
+    marginBottom: 20,
+    lineHeight: LAYOUT.lineHeight.heading + 6,
   },
   languageRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
   },
   langButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
+    minHeight: LAYOUT.settings.langButtonMinHeight,
+    paddingVertical: 20,
+    borderRadius: LAYOUT.radius.button,
+    borderWidth: 2,
     borderColor: COLORS.border,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   langButtonActive: {
     backgroundColor: COLORS.accentMuted,
@@ -206,8 +216,9 @@ const styles = StyleSheet.create({
   },
   langButtonText: {
     color: COLORS.textSecondary,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: LAYOUT.font.heading,
+    fontWeight: '700',
+    lineHeight: LAYOUT.lineHeight.heading,
   },
   langButtonTextActive: {
     color: COLORS.textPrimary,
@@ -218,19 +229,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   speedValue: {
-    fontSize: 16,
+    fontSize: LAYOUT.font.body,
     color: COLORS.textSecondary,
+    fontWeight: '600',
   },
   speedRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 20,
   },
   speedButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 12,
-    borderWidth: 1,
+    width: LAYOUT.settings.speedButton,
+    height: LAYOUT.settings.speedButton,
+    borderRadius: LAYOUT.radius.button,
+    borderWidth: 2,
     borderColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
@@ -239,7 +251,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   speedButtonText: {
-    fontSize: 24,
+    fontSize: LAYOUT.font.control + 4,
     color: COLORS.textPrimary,
     fontWeight: '700',
   },
@@ -250,9 +262,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   speedDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: LAYOUT.settings.speedDot,
+    height: LAYOUT.settings.speedDot,
+    borderRadius: LAYOUT.settings.speedDot / 2,
     backgroundColor: COLORS.border,
   },
   speedDotActive: {
@@ -261,11 +273,12 @@ const styles = StyleSheet.create({
   speedLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 14,
   },
   speedEndLabel: {
-    fontSize: 13,
+    fontSize: LAYOUT.font.bodySmall,
     color: COLORS.textSecondary,
+    fontWeight: '500',
   },
   toggleRow: {
     flexDirection: 'row',
@@ -274,30 +287,37 @@ const styles = StyleSheet.create({
   },
   toggleInfo: {
     flex: 1,
-    marginRight: 12,
+    marginRight: 20,
   },
   toggleSubtext: {
     color: COLORS.textSecondary,
-    marginTop: 4,
+    marginTop: 8,
+    fontSize: LAYOUT.font.body,
+    fontWeight: '500',
+    lineHeight: LAYOUT.lineHeight.body,
   },
   toggleWrapper: {
-    padding: 4,
+    padding: 8,
+    minWidth: LAYOUT.touch.settings,
+    minHeight: LAYOUT.touch.settings,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   toggleTrack: {
-    width: 54,
-    height: 30,
-    borderRadius: 15,
+    width: LAYOUT.settings.toggleWidth,
+    height: LAYOUT.settings.toggleHeight,
+    borderRadius: LAYOUT.settings.toggleHeight / 2,
     backgroundColor: COLORS.toggleTrackOff,
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 5,
   },
   toggleTrackOn: {
     backgroundColor: COLORS.toggleTrackOn,
   },
   toggleThumb: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: LAYOUT.settings.toggleThumb,
+    height: LAYOUT.settings.toggleThumb,
+    borderRadius: LAYOUT.settings.toggleThumb / 2,
     backgroundColor: COLORS.toggleThumb,
   },
   toggleThumbOn: {

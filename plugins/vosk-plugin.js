@@ -37,12 +37,16 @@ module.exports = function withVosk(config) {
       const destAssets = path.join(projectRoot, 'android', 'app', 'src', 'main', 'assets');
       
       if (fs.existsSync(srcModels)) {
-        // Copy each model directory from srcModels to the root of assets
-        const models = fs.readdirSync(srcModels);
+        const models = fs.readdirSync(srcModels).filter(name => name.startsWith('vosk-model'));
+        fs.mkdirSync(destAssets, { recursive: true });
         for (const model of models) {
           const modelSrc = path.join(srcModels, model);
           const modelDest = path.join(destAssets, model);
           if (fs.statSync(modelSrc).isDirectory()) {
+            const uuidPath = path.join(modelSrc, 'uuid');
+            if (!fs.existsSync(uuidPath)) {
+              fs.writeFileSync(uuidPath, `${Date.now()}\n`, 'utf8');
+            }
             fs.cpSync(modelSrc, modelDest, { recursive: true, force: true });
             console.log(`[vosk-plugin] Copied model ${model} to Android assets`);
           }

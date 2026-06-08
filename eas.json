@@ -2,21 +2,15 @@
   "build": {
     "development": {
       "distribution": "internal",
-      "ios": {
-        "buildType": "development"
-      }
+      "developmentClient": true
     },
     "preview": {
       "distribution": "internal",
       "ios": {
-        "buildType": "simulator"
+        "simulator": true
       }
     },
-    "production": {
-      "ios": {
-        "buildType": "release"
-      }
-    }
+    "production": {}
   },
   "submit": {
     "production": {

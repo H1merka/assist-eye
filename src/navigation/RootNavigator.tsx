@@ -3,6 +3,7 @@ import { Image } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { COLORS } from '@/constants/Colors';
+import { LAYOUT } from '@/constants/Layout';
 import { useApp } from '@/context/AppContext';
 import MainScreen from '@/src/screens/MainScreen';
 import SettingsScreen from '@/src/screens/SettingsScreen';
@@ -42,15 +43,20 @@ export default function RootNavigator() {
             backgroundColor: COLORS.surface,
             borderTopColor: COLORS.border,
             borderTopWidth: 1,
-            height: 72,
-            paddingBottom: 12,
-            paddingTop: 8,
+            height: LAYOUT.tabBar.height,
+            paddingBottom: 16,
+            paddingTop: 12,
+          },
+          tabBarItemStyle: {
+            paddingVertical: LAYOUT.tabBar.itemPaddingVertical,
+            minHeight: LAYOUT.touch.min,
           },
           tabBarActiveTintColor: COLORS.tabActive,
           tabBarInactiveTintColor: COLORS.tabInactive,
           tabBarLabelStyle: {
-            fontSize: 13,
-            fontWeight: '600',
+            fontSize: LAYOUT.font.tab,
+            fontWeight: '700',
+            marginTop: 4,
           },
         }}
       >
@@ -60,12 +66,12 @@ export default function RootNavigator() {
           options={{
             title: t('tabs.main'),
             tabBarAccessibilityLabel: t('tabs.main'),
-            tabBarIcon: ({ color, size }) => (
+            tabBarIcon: ({ color }) => (
               <Image
                 source={TAB_ICONS.Main}
                 style={{
-                  width: size ?? 22,
-                  height: size ?? 22,
+                  width: LAYOUT.tabBar.icon,
+                  height: LAYOUT.tabBar.icon,
                   tintColor: color,
                 }}
                 resizeMode="contain"
@@ -79,12 +85,12 @@ export default function RootNavigator() {
           options={{
             title: t('tabs.settings'),
             tabBarAccessibilityLabel: t('tabs.settings'),
-            tabBarIcon: ({ color, size }) => (
+            tabBarIcon: ({ color }) => (
               <Image
                 source={TAB_ICONS.Settings}
                 style={{
-                  width: size ?? 22,
-                  height: size ?? 22,
+                  width: LAYOUT.tabBar.icon,
+                  height: LAYOUT.tabBar.icon,
                   tintColor: color,
                 }}
                 resizeMode="contain"

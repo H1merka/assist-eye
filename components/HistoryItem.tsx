@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { COLORS } from '@/constants/Colors';
+import { LAYOUT } from '@/constants/Layout';
 
 interface HistoryItemProps {
   result: string;
@@ -21,23 +22,25 @@ export default function HistoryItem({ result, timestamp }: HistoryItemProps) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-    marginBottom: 12,
+    borderRadius: LAYOUT.radius.card,
+    paddingVertical: 20,
+    paddingHorizontal: 22,
+    marginBottom: LAYOUT.spacing.item,
+    minHeight: LAYOUT.touch.min,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
   result: {
     color: COLORS.textPrimary,
-    fontSize: 17,
+    fontSize: LAYOUT.font.body,
     fontWeight: '600',
-    marginBottom: 6,
-    lineHeight: 24,
+    marginBottom: 8,
+    lineHeight: LAYOUT.lineHeight.body,
   },
   time: {
     color: COLORS.textSecondary,
-    fontSize: 13,
+    fontSize: LAYOUT.font.caption,
     fontWeight: '500',
+    lineHeight: LAYOUT.lineHeight.caption,
   },
 });

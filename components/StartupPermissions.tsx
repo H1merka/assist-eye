@@ -4,6 +4,7 @@ import * as Location from 'expo-location';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { useCameraPermission } from 'react-native-vision-camera';
 import { settingsRepository } from '@features/storage/data/databaseHelper';
+import { ensureCameraPermission } from '@features/camera/data/cameraPermissions';
 
 const STARTUP_PERMISSIONS_COMPLETED_KEY = 'startup_permissions_completed';
 
@@ -24,15 +25,8 @@ async function requestMicPermission(): Promise<void> {
   await request(PERMISSIONS.IOS.MICROPHONE);
 }
 
-async function requestCameraPermission(
-  hasPermission: boolean,
-  requestPermission: () => Promise<boolean>,
-): Promise<void> {
-  if (hasPermission) {
-    return;
-  }
-
-  await requestPermission();
+async function requestCameraPermission(): Promise<void> {
+  await ensureCameraPermission();
 }
 
 async function requestLocationPermission(): Promise<void> {
@@ -53,32 +47,27 @@ async function markStartupPermissionsCompleted(): Promise<void> {
 }
 
 export default function StartupPermissions(): null {
-  const { hasPermission, requestPermission } = useCameraPermission();
-
   useEffect(() => {
     let cancelled = false;
 
     const run = async (): Promise<void> => {
-      if (await isStartupPermissionsCompleted()) {
-        return;
-      }
-
       await requestMicPermission();
       if (cancelled) {
         return;
       }
 
-      await requestCameraPermission(hasPermission, requestPermission);
+      await requestCameraPermission();
       if (cancelled) {
         return;
       }
 
-      await requestLocationPermission();
-      if (cancelled) {
-        return;
+      if (!(await isStartupPermissionsCompleted())) {
+        await requestLocationPermission();
+        if (cancelled) {
+          return;
+        }
+        await markStartupPermissionsCompleted();
       }
-
-      await markStartupPermissionsCompleted();
     };
 
     void run();
@@ -86,7 +75,7 @@ export default function StartupPermissions(): null {
     return () => {
       cancelled = true;
     };
-  }, [hasPermission, requestPermission]);
+  }, []);
 
   return null;
 }

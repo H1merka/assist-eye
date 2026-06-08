@@ -5,6 +5,7 @@ import * as Location from 'expo-location';
 import { check, request } from 'react-native-permissions';
 import { useCameraPermission } from 'react-native-vision-camera';
 import { settingsRepository } from '@features/storage/data/databaseHelper';
+import { ensureCameraPermission } from '@features/camera/data/cameraPermissions';
 import StartupPermissions from '../../components/StartupPermissions';
 
 jest.mock('@features/storage/data/databaseHelper', () => ({
@@ -12,6 +13,10 @@ jest.mock('@features/storage/data/databaseHelper', () => ({
     getBool: jest.fn(),
     setBool: jest.fn(),
   },
+}));
+
+jest.mock('@features/camera/data/cameraPermissions', () => ({
+  ensureCameraPermission: jest.fn().mockResolvedValue(true),
 }));
 
 describe('StartupPermissions', () => {
@@ -22,17 +27,13 @@ describe('StartupPermissions', () => {
   const mockLocationRequest = Location.requestForegroundPermissionsAsync as jest.Mock;
   const mockGetBool = settingsRepository.getBool as jest.Mock;
   const mockSetBool = settingsRepository.setBool as jest.Mock;
-  let requestPermission: jest.Mock;
+  const mockEnsureCameraPermission = ensureCameraPermission as jest.Mock;
   let permissionsCheckSpy: jest.SpyInstance;
   let permissionsRequestSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    requestPermission = jest.fn().mockResolvedValue(true);
-    mockUseCameraPermission.mockReturnValue({
-      hasPermission: false,
-      requestPermission,
-    });
+    mockEnsureCameraPermission.mockResolvedValue(true);
     mockGetBool.mockResolvedValue(false);
     mockCheck.mockResolvedValue('denied');
     mockRequest.mockResolvedValue('granted');
@@ -54,22 +55,20 @@ describe('StartupPermissions', () => {
 
     expect(mockGetBool).toHaveBeenCalledWith('startup_permissions_completed');
     expect(mockCheck.mock.invocationCallOrder[0]).toBeLessThan(mockRequest.mock.invocationCallOrder[0]);
-    expect(mockRequest.mock.invocationCallOrder[0]).toBeLessThan(requestPermission.mock.invocationCallOrder[0]);
-    expect(requestPermission.mock.invocationCallOrder[0]).toBeLessThan(mockLocationGet.mock.invocationCallOrder[0]);
+    expect(mockRequest.mock.invocationCallOrder[0]).toBeLessThan(mockEnsureCameraPermission.mock.invocationCallOrder[0]);
+    expect(mockEnsureCameraPermission.mock.invocationCallOrder[0]).toBeLessThan(mockLocationGet.mock.invocationCallOrder[0]);
     expect(mockLocationGet.mock.invocationCallOrder[0]).toBeLessThan(mockLocationRequest.mock.invocationCallOrder[0]);
     expect(mockLocationRequest.mock.invocationCallOrder[0]).toBeLessThan(mockSetBool.mock.invocationCallOrder[0]);
   });
 
-  it('skips prompts when startup permissions were already completed', async () => {
+  it('still checks mic and camera when startup permissions were already completed', async () => {
     mockGetBool.mockResolvedValue(true);
 
     render(<StartupPermissions />);
 
-    await waitFor(() => expect(mockGetBool).toHaveBeenCalledWith('startup_permissions_completed'));
-    expect(mockCheck).not.toHaveBeenCalled();
-    expect(mockRequest).not.toHaveBeenCalled();
+    await waitFor(() => expect(mockEnsureCameraPermission).toHaveBeenCalled());
+    expect(mockCheck).toHaveBeenCalled();
     expect(mockLocationGet).not.toHaveBeenCalled();
-    expect(mockLocationRequest).not.toHaveBeenCalled();
     expect(mockSetBool).not.toHaveBeenCalled();
   });
 });

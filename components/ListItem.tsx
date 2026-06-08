@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, AccessibilityRole } from 'react-native';
 import { COLORS } from '@/constants/Colors';
+import { LAYOUT } from '@/constants/Layout';
 
 interface ListItemProps {
   mainText: string;
@@ -27,25 +28,26 @@ export default function ListItem({ mainText, secondaryText, onPress }: ListItemP
 const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    marginBottom: 12,
-    borderLeftWidth: 4,
+    borderRadius: LAYOUT.radius.card,
+    paddingVertical: 20,
+    paddingHorizontal: LAYOUT.spacing.screen,
+    marginBottom: LAYOUT.item,
+    borderLeftWidth: 5,
     borderLeftColor: COLORS.accent,
-    minHeight: 72,
+    minHeight: LAYOUT.touch.min + 16,
     justifyContent: 'center',
   },
   mainText: {
-    fontSize: 18,
+    fontSize: LAYOUT.font.body,
     fontWeight: '600',
     color: COLORS.textPrimary,
-    marginBottom: 4,
-    lineHeight: 24,
+    marginBottom: 6,
+    lineHeight: LAYOUT.lineHeight.body,
   },
   secondaryText: {
-    fontSize: 13,
+    fontSize: LAYOUT.font.caption,
     color: COLORS.textSecondary,
     fontWeight: '400',
+    lineHeight: LAYOUT.lineHeight.caption,
   },
 });

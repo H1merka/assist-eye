@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { AppStatus } from '@/context/AppContext';
 import { COLORS } from '@/constants/Colors';
+import { LAYOUT } from '@/constants/Layout';
 
 interface StatusFeedbackProps {
   message: string;
@@ -77,10 +78,10 @@ export default function StatusFeedback({ message, status, transcript }: StatusFe
 const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    minHeight: 80,
+    borderRadius: LAYOUT.radius.card,
+    paddingVertical: 20,
+    paddingHorizontal: LAYOUT.spacing.screen,
+    minHeight: 96,
     justifyContent: 'center',
     width: '100%',
     borderWidth: 1,
@@ -95,20 +96,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   indicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
   },
   text: {
-    fontSize: 18,
+    fontSize: LAYOUT.font.body,
     fontWeight: '700',
     color: COLORS.textPrimary,
-    lineHeight: 24,
+    lineHeight: LAYOUT.lineHeight.body,
   },
   transcript: {
-    fontSize: 14,
+    fontSize: LAYOUT.font.bodySmall,
     color: COLORS.accent,
-    marginTop: 2,
+    marginTop: 6,
     fontStyle: 'italic',
+    lineHeight: LAYOUT.lineHeight.bodySmall,
   },
 });

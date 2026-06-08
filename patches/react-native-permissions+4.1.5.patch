@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-native-permissions/android/build.gradle b/node_modules/react-native-permissions/android/build.gradle
+index 23378a8..3dd8c99 100644
+--- a/node_modules/react-native-permissions/android/build.gradle
++++ b/node_modules/react-native-permissions/android/build.gradle
+@@ -4,7 +4,7 @@ buildscript {
+     }
+     repositories {
+         google()
+-        gradlePluginPortal()
++        mavenCentral()
+     }
+     dependencies {
+         classpath("com.android.tools.build:gradle:7.3.1")

@@ -6,15 +6,18 @@ import MainButton from '@/components/MainButton';
 import StatusFeedback from '@/components/StatusFeedback';
 import MapDisplay from '@/components/MapDisplay';
 import { COLORS } from '@/constants/Colors';
+import { LAYOUT } from '@/constants/Layout';
 import { speechRecognizer } from '@features/voiceInterface/data/voskSpeechRecognizer';
 import { useCommandProcessor } from '@features/commandProcessor/store/commandStore';
 import { Haptics } from '@core/utils/vibration';
 import {
   onCaptureAwaitingChange,
+  onCameraActiveChange,
   setCameraActive,
   signalUserCapture,
 } from '@features/camera/data/cameraService';
 import { AudioFeedback } from '@core/utils/audio';
+import { isFeatureEnabled } from '@core/config/featureFlags';
 
 export default function MainScreen() {
   const { status, setStatus, t, language, vibrationEnabled } = useApp();
@@ -25,6 +28,7 @@ export default function MainScreen() {
   const pressIdRef = React.useRef(0);
   const lastCaptureTapRef = React.useRef(0);
   const [captureAwaiting, setCaptureAwaiting] = React.useState(false);
+  const [cameraPreviewVisible, setCameraPreviewVisible] = React.useState(false);
   const [transcript, setTranscript] = React.useState('');
 
   useEffect(() => {
@@ -32,17 +36,10 @@ export default function MainScreen() {
     AudioFeedback.preload();
 
     const initVosk = async () => {
-      const baseResult = await speechRecognizer.initialize('ru');
-      if (!baseResult.ok && isActive) {
+      const lang = language === 'EN' ? 'en' : 'ru';
+      const initResult = await speechRecognizer.initialize(lang);
+      if (!initResult.ok && isActive) {
         Haptics.error(vibrationEnabled);
-        return;
-      }
-
-      if (language === 'EN') {
-        const enResult = await speechRecognizer.initialize('en');
-        if (!enResult.ok && isActive) {
-          Haptics.error(vibrationEnabled);
-        }
       }
     };
 
@@ -85,6 +82,12 @@ export default function MainScreen() {
     });
   }, []);
 
+  useEffect(() => {
+    return onCameraActiveChange(active => {
+      setCameraPreviewVisible(active);
+    });
+  }, []);
+
   const statusMessage = (() => {
     switch (status) {
     case 'idle':
@@ -98,7 +101,26 @@ export default function MainScreen() {
     }
   })();
 
+  const testReadOnPress = isFeatureEnabled('testReadOnButtonPress');
+  const readCommandText = language === 'EN' ? 'read' : 'прочитай';
+
+  const triggerReadCommand = async () => {
+    requestStop();
+    await speechRecognizer.stopListening();
+    setTranscript(readCommandText);
+    resultReceived.current = true;
+    Haptics.selection(vibrationEnabled);
+    AudioFeedback.play('start');
+    setStatus('processing');
+    void processVoiceInput(readCommandText);
+  };
+
   const handlePressIn = async () => {
+    if (testReadOnPress) {
+      await triggerReadCommand();
+      return;
+    }
+
     pressingRef.current = true;
     const pressId = pressIdRef.current + 1;
     pressIdRef.current = pressId;
@@ -123,20 +145,23 @@ export default function MainScreen() {
   };
 
   const handlePressOut = async () => {
+    if (testReadOnPress) {
+      return;
+    }
+
     pressingRef.current = false;
     const pressId = pressIdRef.current;
     if (status === 'listening') {
       await speechRecognizer.stopListening();
       AudioFeedback.play('stop');
-      setStatus('idle');
 
-      // Если за время удержания результат не пришел — подаем сигнал предупреждения
+      // Vosk отдаёт финальный текст чуть позже stop()
       setTimeout(() => {
         if (!resultReceived.current && pressId === pressIdRef.current) {
           AudioFeedback.play('warning');
           setStatus('idle');
         }
-      }, 100);
+      }, 900);
     }
   };
 
@@ -155,18 +180,24 @@ export default function MainScreen() {
     lastCaptureTapRef.current = now;
   };
 
-  if (captureAwaiting) {
+  if (cameraPreviewVisible) {
     return (
-      <SafeAreaView style={styles.captureSafe}>
+      <SafeAreaView style={styles.captureSafe} pointerEvents="box-none">
         <Pressable
           style={styles.captureOverlay}
-          onPress={handleCaptureTap}
+          onPress={captureAwaiting ? handleCaptureTap : undefined}
           accessibilityRole="button"
-          accessibilityLabel={t('status.capturePrompt')}
-          accessibilityHint={t('status.capturePrompt')}
+          accessibilityLabel={
+            captureAwaiting ? t('status.capturePrompt') : t('status.readCameraPrompt')
+          }
+          accessibilityHint={
+            captureAwaiting ? t('status.capturePrompt') : t('status.readCameraPrompt')
+          }
         >
-          <View style={styles.captureHint}>
-            <Text style={styles.captureHintText}>{t('status.capturePrompt')}</Text>
+          <View style={styles.captureHint} pointerEvents="none">
+            <Text style={styles.captureHintText}>
+              {captureAwaiting ? t('status.capturePrompt') : t('status.readCameraPrompt')}
+            </Text>
           </View>
         </Pressable>
       </SafeAreaView>
@@ -185,18 +216,22 @@ export default function MainScreen() {
             {t('home.screenLabel')}
           </Text>
           <Text style={styles.appSubtitle} accessibilityRole="text">
-            {t('home.voiceButtonHint')}
+            {testReadOnPress ? t('voice.readPrompt') : t('home.voiceButtonHint')}
           </Text>
         </View>
 
         <View style={styles.buttonArea}>
           <MainButton
-            label={t('home.voiceButton')}
-            accessibilityLabel={t('home.voiceButtonA11y')}
-            accessibilityHint={t('home.voiceButtonHint')}
+            label={testReadOnPress ? t('commands.read') : t('home.voiceButton')}
+            accessibilityLabel={
+              testReadOnPress ? t('commands.read') : t('home.voiceButtonA11y')
+            }
+            accessibilityHint={
+              testReadOnPress ? t('voice.readPrompt') : t('home.voiceButtonHint')
+            }
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
-            isActive={status === 'listening'}
+            isActive={!testReadOnPress && status === 'listening'}
           />
         </View>
 
@@ -217,39 +252,40 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: Platform.OS === 'android' ? 32 : 16,
-    paddingBottom: 16,
+    paddingHorizontal: LAYOUT.spacing.screen,
+    paddingTop: Platform.OS === 'android' ? 36 : 20,
+    paddingBottom: 20,
     alignItems: 'center',
     backgroundColor: COLORS.background,
   },
   captureSafe: {
     flex: 1,
     backgroundColor: 'transparent',
+    zIndex: 30,
+    elevation: 30,
   },
   captureOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'transparent',
-    zIndex: 3,
   },
   captureHint: {
     position: 'absolute',
-    left: 24,
-    right: 24,
-    bottom: 32,
+    left: LAYOUT.spacing.screen,
+    right: LAYOUT.spacing.screen,
+    bottom: 36,
     backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
+    borderRadius: LAYOUT.radius.card,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.12)',
   },
   captureHintText: {
     color: COLORS.textPrimary,
-    fontSize: 18,
+    fontSize: LAYOUT.font.body,
     fontWeight: '700',
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: LAYOUT.lineHeight.body,
   },
   header: {
     alignItems: 'center',
@@ -258,18 +294,20 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   appTitle: {
-    fontSize: 30,
+    fontSize: LAYOUT.font.title,
     fontWeight: '800',
     color: COLORS.textPrimary,
     letterSpacing: 0.5,
+    lineHeight: LAYOUT.lineHeight.title,
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: -1, height: 1 },
     textShadowRadius: 10,
   },
   appSubtitle: {
-    fontSize: 16,
+    fontSize: LAYOUT.font.bodySmall,
     color: COLORS.textSecondary,
-    marginTop: 4,
+    marginTop: 8,
+    lineHeight: LAYOUT.lineHeight.bodySmall,
     fontWeight: '400',
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: -1, height: 1 },

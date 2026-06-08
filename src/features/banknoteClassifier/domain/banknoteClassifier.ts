@@ -10,7 +10,7 @@ export interface BanknoteClassifier {
    * @param imageInput — путь к файлу или готовый RGB-тензор
    * @returns название купюры (напр. «500 рублей») или Failure
    */
-  classify(imageInput: string | Uint8Array): Promise<Result<string>>;
+  classify(imageInput: string | Uint8Array | ArrayLike<number>): Promise<Result<string>>;
 
   /** Загрузить модель */
   initialize(): Promise<Result<void>>;

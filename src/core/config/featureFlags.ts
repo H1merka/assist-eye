@@ -18,6 +18,9 @@ export const FeatureFlags = {
 
   /** Описание позиции объектов: лево/центр/право (Could-have, post-MVP) */
   objectPosition: false,
+
+  /** Тест: кнопка на главном экране сразу запускает «Прочитай» */
+  testReadOnButtonPress: true,
 } as const;
 
 export type FeatureFlagKey = keyof typeof FeatureFlags;

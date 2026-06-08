@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { COLORS } from '@/constants/Colors';
+import { LAYOUT } from '@/constants/Layout';
 
 interface SettingsRowProps {
   label: string;
@@ -26,29 +27,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    marginBottom: 12,
+    borderRadius: LAYOUT.radius.card,
+    paddingVertical: LAYOUT.settings.cardPadding,
+    paddingHorizontal: LAYOUT.spacing.screen,
+    marginBottom: LAYOUT.spacing.item,
     borderWidth: 1,
     borderColor: COLORS.border,
-    minHeight: 72,
+    minHeight: LAYOUT.touch.settings,
   },
   labelSection: {
     flex: 1,
     marginRight: 16,
   },
   label: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: LAYOUT.font.settingsSection,
+    fontWeight: '700',
     color: COLORS.textPrimary,
-    marginBottom: 2,
+    marginBottom: 6,
+    lineHeight: LAYOUT.lineHeight.heading + 6,
   },
   hint: {
-    fontSize: 13,
+    fontSize: LAYOUT.font.bodySmall,
     color: COLORS.textSecondary,
     fontWeight: '400',
-    marginTop: 4,
+    marginTop: 6,
+    lineHeight: LAYOUT.lineHeight.caption,
   },
   controlSection: {
     flexShrink: 1,

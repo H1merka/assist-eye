@@ -2,6 +2,7 @@
 
 buildscript {
   repositories {
+    maven { url 'https://maven.google.com' }
     google()
     mavenCentral()
   }
@@ -14,9 +15,31 @@ buildscript {
 
 allprojects {
   repositories {
+    maven { url 'https://maven.google.com' }
     google()
     mavenCentral()
     maven { url 'https://www.jitpack.io' }
+  }
+}
+
+def projectBuildToolsVersion = findProperty('android.buildToolsVersion') ?: '36.1.0'
+ext.buildToolsVersion = projectBuildToolsVersion
+
+subprojects { subproject ->
+  subproject.plugins.withId('com.android.library') {
+    subproject.android {
+      buildToolsVersion projectBuildToolsVersion
+    }
+  }
+  subproject.plugins.withId('com.android.application') {
+    subproject.android {
+      buildToolsVersion projectBuildToolsVersion
+    }
+  }
+  subproject.afterEvaluate {
+    if (subproject.plugins.hasPlugin('com.android.library') || subproject.plugins.hasPlugin('com.android.application')) {
+      subproject.android.buildToolsVersion = projectBuildToolsVersion
+    }
   }
 }
 
